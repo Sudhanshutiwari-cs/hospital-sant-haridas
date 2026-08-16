@@ -1,7 +1,7 @@
 // app/book-appointment/page.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -71,32 +71,6 @@ function RupeeIcon() {
     <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline-block text-gray-500">
       <path d="M5 4h8M5 8h8M9 8l-4 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M5 6c0 0 0 2 4 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function LocationIcon() {
-  return (
-    <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline-block text-gray-400">
-      <path d="M9 2a5 5 0 00-5 5c0 3.5 5 9 5 9s5-5.5 5-9a5 5 0 00-5-5z" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="9" cy="7" r="1.8" stroke="currentColor" strokeWidth="1.3" />
-    </svg>
-  );
-}
-
-function VideoIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
-      <rect x="2" y="6" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M16 10l6-3v10l-6-3" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function HospitalIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
-      <path d="M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h6M9 11h6M9 15h6M12 3v18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -180,38 +154,23 @@ function MainNav() {
 
 type Doctor = {
   id: string;
-  slug: string;
   name: string;
-  designation: string;
-  hospital_name: string;
-  hospital_id: string;
-  specialtyBold: string;
-  specialtyLight: string;
+  degree: string;
+  specialization: string;
   experience: number;
   fees: number;
   image: string;
-  consultation_mode: 'both' | 'hospital_visit' | 'video_consult';
-};
-
-type Hospital = {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
 };
 
 type TimeSlot = {
   id: string;
   doctor_id: string;
-  hospital_id: string | null;
   slot_date: string;
   start_time: string;
   end_time: string;
-  consultation_mode: 'hospital_visit' | 'video_consult';
-  status: 'available' | 'booked' | 'unavailable';
-  max_bookings: number;
-  current_bookings: number;
+  slot_type: string;
+  is_booked: boolean;
+  is_available: boolean;
 };
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -222,10 +181,7 @@ export default function BookAppointmentPage() {
   // State management
   const [currentStep, setCurrentStep] = useState(1);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
-  const [consultationType, setConsultationType] = useState<'hospital_visit' | 'video_consult'>('hospital_visit');
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
@@ -237,6 +193,11 @@ export default function BookAppointmentPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentMonth, setCurrentMonth] = useState<Date>(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
 
   const [formData, setFormData] = useState({
     patient_name: '',
@@ -256,6 +217,7 @@ export default function BookAppointmentPage() {
       try {
         const doctor = JSON.parse(selectedDoctorData);
         setSelectedDoctor(doctor);
+        sessionStorage.setItem('selectedDoctorBackup', JSON.stringify(doctor));
         setCurrentStep(2);
         sessionStorage.removeItem('selectedDoctor');
       } catch (err) {
@@ -267,10 +229,12 @@ export default function BookAppointmentPage() {
       try {
         const booking = JSON.parse(bookingData);
         setSelectedDoctor(booking.doctor);
-        setConsultationType(booking.consultationType);
+        sessionStorage.setItem('selectedDoctorBackup', JSON.stringify(booking.doctor));
         setSelectedDate(booking.date);
+        sessionStorage.setItem('selectedDate', booking.date);
         if (booking.slot) {
           setSelectedSlot(booking.slot);
+          sessionStorage.setItem('selectedSlot', JSON.stringify(booking.slot));
         }
         setCurrentStep(3);
         sessionStorage.removeItem('bookingData');
@@ -280,18 +244,53 @@ export default function BookAppointmentPage() {
     }
   }, []);
 
+  // Restore state when moving to step 3
+  useEffect(() => {
+    if (currentStep === 3) {
+      if (!selectedSlot) {
+        const savedSlot = sessionStorage.getItem('selectedSlot');
+        if (savedSlot) {
+          try {
+            const slot = JSON.parse(savedSlot);
+            setSelectedSlot(slot);
+          } catch (err) {
+            console.error('Error parsing saved slot:', err);
+          }
+        }
+      }
+      
+      if (!selectedDate) {
+        const savedDate = sessionStorage.getItem('selectedDate');
+        if (savedDate) {
+          setSelectedDate(savedDate);
+        }
+      }
+      
+      if (!selectedDoctor) {
+        const savedDoctor = sessionStorage.getItem('selectedDoctorBackup');
+        if (savedDoctor) {
+          try {
+            const doctor = JSON.parse(savedDoctor);
+            setSelectedDoctor(doctor);
+          } catch (err) {
+            console.error('Error parsing saved doctor:', err);
+          }
+        }
+      }
+    }
+  }, [currentStep]);
+
   // Fetch initial data
   useEffect(() => {
     fetchDoctors();
-    fetchHospitals();
   }, []);
 
-  // Fetch available slots when doctor, date, or consultation type changes
+  // Fetch available slots when doctor, date changes
   useEffect(() => {
     if (selectedDoctor && selectedDate) {
       fetchAvailableSlots();
     }
-  }, [selectedDoctor, selectedDate, consultationType, selectedHospital]);
+  }, [selectedDoctor, selectedDate]);
 
   const fetchDoctors = async () => {
     setIsLoadingDoctors(true);
@@ -301,30 +300,15 @@ export default function BookAppointmentPage() {
       let query = supabase
         .from('doctors')
         .select(`
-          id,
-          slug,
-          name,
-          designation,
-          hospital_id,
-          speciality_bold,
-          speciality_light,
-          experience_years,
-          consultation_fee,
-          photo_url,
-          consultation_mode,
-          is_active,
-          hospitals (
-            id,
-            name
-          )
+          id, full_name, email, phone, degree, specialization,
+          experience_years, consultation_fee, profile_image_url, is_active, about
         `)
         .eq('is_active', true)
-        .order('sort_order', { ascending: true })
-        .order('name', { ascending: true });
+        .order('full_name', { ascending: true });
 
       if (searchTerm.trim()) {
         const searchPattern = `%${searchTerm.trim()}%`;
-        query = query.or(`name.ilike.${searchPattern},designation.ilike.${searchPattern},speciality_bold.ilike.${searchPattern}`);
+        query = query.or(`full_name.ilike.${searchPattern},degree.ilike.${searchPattern},specialization.ilike.${searchPattern}`);
       }
 
       const { data, error: fetchError } = await query;
@@ -333,17 +317,12 @@ export default function BookAppointmentPage() {
 
       const transformedDoctors: Doctor[] = (data || []).map((doc: any) => ({
         id: doc.id,
-        slug: doc.slug,
-        name: doc.name,
-        designation: doc.designation,
-        hospital_id: doc.hospital_id,
-        hospital_name: doc.hospitals?.name || 'Sant Haridas Hospital',
-        specialtyBold: doc.speciality_bold,
-        specialtyLight: doc.speciality_light,
-        experience: doc.experience_years,
-        fees: doc.consultation_fee,
-        image: doc.photo_url || '',
-        consultation_mode: doc.consultation_mode,
+        name: doc.full_name,
+        degree: doc.degree || 'Doctor',
+        specialization: doc.specialization || 'General',
+        experience: doc.experience_years || 0,
+        fees: doc.consultation_fee || 0,
+        image: doc.profile_image_url || '',
       }));
 
       setDoctors(transformedDoctors);
@@ -355,25 +334,6 @@ export default function BookAppointmentPage() {
     }
   };
 
-  const fetchHospitals = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('hospitals')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-
-      setHospitals(data || []);
-      if (data && data.length > 0) {
-        setSelectedHospital(data[0]);
-      }
-    } catch (err) {
-      console.error('Error fetching hospitals:', err);
-    }
-  };
-
   const fetchAvailableSlots = async () => {
     if (!selectedDoctor || !selectedDate) return;
     
@@ -381,28 +341,18 @@ export default function BookAppointmentPage() {
     setError('');
     
     try {
-      let query = supabase
+      const { data: slots, error: slotsError } = await supabase
         .from('doctor_slots')
         .select('*')
         .eq('doctor_id', selectedDoctor.id)
         .eq('slot_date', selectedDate)
-        .eq('consultation_mode', consultationType)
-        .eq('status', 'available')
+        .eq('is_booked', false)
+        .eq('is_available', true)
         .order('start_time', { ascending: true });
-
-      if (selectedHospital) {
-        query = query.eq('hospital_id', selectedHospital.id);
-      }
-
-      const { data: slots, error: slotsError } = await query;
 
       if (slotsError) throw slotsError;
 
-      const availableSlotsData = (slots || []).filter(
-        slot => slot.current_bookings < slot.max_bookings
-      );
-
-      setAvailableSlots(availableSlotsData);
+      setAvailableSlots(slots || []);
       setSelectedSlot(null);
     } catch (err: any) {
       console.error('Error fetching slots:', err);
@@ -413,51 +363,87 @@ export default function BookAppointmentPage() {
     }
   };
 
-  // Generate next 7 days for date selection
-  const next7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() + i);
-    return {
-      date: date.toISOString().split('T')[0],
-      dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
-      dayNumber: date.getDate(),
-      month: date.toLocaleDateString('en-US', { month: 'short' }),
-    };
-  });
+  // Generate days for the selected month
+  const generateMonthDays = (monthDate: Date) => {
+    const days: { date: string; dayName: string; dayNumber: number; month: string; isPast: boolean }[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const year = monthDate.getFullYear();
+    const month = monthDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(year, month, i);
+      date.setHours(0, 0, 0, 0);
+      
+      days.push({
+        date: date.toISOString().split('T')[0],
+        dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        dayNumber: i,
+        month: date.toLocaleDateString('en-US', { month: 'short' }),
+        isPast: date < today,
+      });
+    }
+    
+    return days;
+  };
+
+  const monthDays = generateMonthDays(currentMonth);
+
+  const goToPreviousMonth = () => {
+    const d = new Date(currentMonth);
+    d.setMonth(d.getMonth() - 1);
+    setCurrentMonth(d);
+  };
+
+  const goToNextMonth = () => {
+    const d = new Date(currentMonth);
+    d.setMonth(d.getMonth() + 1);
+    setCurrentMonth(d);
+  };
+
+  const canGoPreviousMonth = () => {
+    const today = new Date();
+    const prevMonth = new Date(currentMonth);
+    prevMonth.setMonth(prevMonth.getMonth() - 1);
+    return prevMonth.getMonth() >= today.getMonth() && prevMonth.getFullYear() >= today.getFullYear();
+  };
+
+  const canGoNextMonth = () => {
+    const today = new Date();
+    const maxMonth = new Date(today);
+    maxMonth.setMonth(maxMonth.getMonth() + 3);
+    return currentMonth < maxMonth;
+  };
 
   // Handle doctor selection
   const handleDoctorSelect = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
+    sessionStorage.setItem('selectedDoctorBackup', JSON.stringify(doctor));
     setSelectedSlot(null);
+    sessionStorage.removeItem('selectedSlot');
     setSelectedDate('');
+    sessionStorage.removeItem('selectedDate');
     setAvailableSlots([]);
-    
-    // Set default hospital if doctor has one
-    if (doctor.hospital_id) {
-      const hospital = hospitals.find(h => h.id === doctor.hospital_id);
-      setSelectedHospital(hospital || null);
-    }
-    
     setCurrentStep(2);
-  };
-
-  // Handle consultation type change
-  const handleConsultationType = (type: 'hospital_visit' | 'video_consult') => {
-    setConsultationType(type);
-    setSelectedSlot(null);
-    setSelectedDate('');
-    setAvailableSlots([]);
   };
 
   // Handle date selection
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
+    sessionStorage.setItem('selectedDate', date);
     setSelectedSlot(null);
+    sessionStorage.removeItem('selectedSlot');
+    
+    const selectedDateObj = new Date(date);
+    setCurrentMonth(selectedDateObj);
   };
 
   // Handle slot selection
   const handleSlotSelect = (slot: TimeSlot) => {
     setSelectedSlot(slot);
+    sessionStorage.setItem('selectedSlot', JSON.stringify(slot));
   };
 
   // Handle form input changes
@@ -465,7 +451,6 @@ export default function BookAppointmentPage() {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     
-    // Clear error for this field
     if (formErrors[name]) {
       const newErrors = { ...formErrors };
       delete newErrors[name];
@@ -483,8 +468,11 @@ export default function BookAppointmentPage() {
     
     if (!formData.patient_phone.trim()) {
       errors.patient_phone = 'Phone number is required';
-    } else if (!/^\d{10}$/.test(formData.patient_phone.replace(/[-()\s]/g, ''))) {
-      errors.patient_phone = 'Please enter a valid 10-digit phone number';
+    } else {
+      const phoneDigits = formData.patient_phone.replace(/\D/g, '');
+      if (phoneDigits.length !== 10) {
+        errors.patient_phone = 'Please enter a valid 10-digit phone number';
+      }
     }
     
     if (formData.patient_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.patient_email)) {
@@ -493,17 +481,9 @@ export default function BookAppointmentPage() {
     
     if (formData.patient_age) {
       const age = parseInt(formData.patient_age);
-      if (isNaN(age) || age < 0 || age > 120) {
+      if (isNaN(age) || age < 0 || age > 150) {
         errors.patient_age = 'Please enter a valid age';
       }
-    }
-    
-    if (!selectedDate) {
-      errors.date = 'Please select a date';
-    }
-    
-    if (!selectedSlot) {
-      errors.slot = 'Please select a time slot';
     }
 
     setFormErrors(errors);
@@ -512,9 +492,7 @@ export default function BookAppointmentPage() {
 
   // Submit booking
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
     
     if (!selectedDoctor || !selectedSlot || !selectedDate) {
       setError('Please complete all booking steps');
@@ -525,71 +503,96 @@ export default function BookAppointmentPage() {
     setError('');
     
     try {
-      // Check if slot is still available
+      let patientId = null;
+      
+      const { data: existingPatient, error: patientLookupError } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('phone', formData.patient_phone)
+        .limit(1);
+
+      if (patientLookupError) throw patientLookupError;
+
+      if (existingPatient && existingPatient.length > 0) {
+        patientId = existingPatient[0].id;
+      } else {
+        const patientData: any = {
+          full_name: formData.patient_name,
+          phone: formData.patient_phone,
+          email: formData.patient_email || null,
+          gender: formData.patient_gender || null,
+        };
+
+        if (formData.patient_age) {
+          const birthYear = new Date().getFullYear() - parseInt(formData.patient_age);
+          patientData.date_of_birth = `${birthYear}-01-01`;
+        }
+
+        const { data: newPatient, error: patientCreateError } = await supabase
+          .from('patients')
+          .insert(patientData)
+          .select()
+          .single();
+
+        if (patientCreateError) throw patientCreateError;
+        patientId = newPatient.id;
+      }
+
       const { data: slotCheck, error: slotCheckError } = await supabase
         .from('doctor_slots')
-        .select('status, current_bookings, max_bookings')
+        .select('is_booked, is_available')
         .eq('id', selectedSlot.id)
         .single();
 
       if (slotCheckError) throw slotCheckError;
 
-      if (slotCheck.status !== 'available' || slotCheck.current_bookings >= slotCheck.max_bookings) {
+      if (slotCheck.is_booked || !slotCheck.is_available) {
         setError('Selected slot is no longer available. Please choose another slot.');
         setIsSubmitting(false);
         return;
       }
 
-      // Create appointment
+      const appointmentData = {
+        doctor_id: selectedDoctor.id,
+        patient_id: patientId,
+        slot_id: selectedSlot.id,
+        appointment_date: selectedDate,
+        appointment_time: selectedSlot.start_time,
+        appointment_type: 'consultation',
+        status: 'pending',
+        symptoms: formData.patient_message || null,
+        notes: formData.patient_message || null,
+        payment_status: 'unpaid',
+        payment_amount: selectedDoctor.fees,
+      };
+
       const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')
-        .insert({
-          patient_name: formData.patient_name,
-          patient_phone: formData.patient_phone,
-          patient_email: formData.patient_email || null,
-          patient_age: formData.patient_age ? parseInt(formData.patient_age) : null,
-          patient_gender: formData.patient_gender,
-          patient_message: formData.patient_message || null,
-          doctor_id: selectedDoctor.id,
-          slot_id: selectedSlot.id,
-          hospital_id: selectedHospital?.id || null,
-          appointment_type: consultationType,
-          appointment_date: selectedDate,
-          appointment_time: selectedSlot.start_time,
-          status: 'pending',
-        })
+        .insert(appointmentData)
         .select()
         .single();
 
       if (appointmentError) throw appointmentError;
 
-      // Update slot booking count
       const { error: slotUpdateError } = await supabase
-        .rpc('increment_slot_bookings', { 
-          slot_id: selectedSlot.id 
-        });
+        .from('doctor_slots')
+        .update({ is_booked: true })
+        .eq('id', selectedSlot.id);
 
       if (slotUpdateError) {
-        console.error('Error updating slot:', slotUpdateError);
-        // Continue anyway as appointment was created
+        console.error('Slot update error:', slotUpdateError);
       }
-
-      // Add to status history
-      await supabase
-        .from('appointment_status_history')
-        .insert({
-          appointment_id: appointment.id,
-          old_status: null,
-          new_status: 'pending',
-          note: 'Appointment created'
-        });
 
       setBookingReference(appointment.id);
       setBookingSuccess(true);
       
+      sessionStorage.removeItem('selectedSlot');
+      sessionStorage.removeItem('selectedDate');
+      sessionStorage.removeItem('selectedDoctorBackup');
+      
     } catch (err: any) {
       console.error('Error booking appointment:', err);
-      setError(err.message || 'Failed to book appointment');
+      setError(err.message || 'Failed to book appointment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -602,8 +605,6 @@ export default function BookAppointmentPage() {
     setSelectedSlot(null);
     setSelectedDate('');
     setAvailableSlots([]);
-    setConsultationType('hospital_visit');
-    setSelectedHospital(null);
     setFormData({
       patient_name: '',
       patient_phone: '',
@@ -617,14 +618,17 @@ export default function BookAppointmentPage() {
     setFormErrors({});
     setError('');
     setSearchTerm('');
+    
+    sessionStorage.removeItem('selectedSlot');
+    sessionStorage.removeItem('selectedDate');
+    sessionStorage.removeItem('selectedDoctorBackup');
+    
     fetchDoctors();
-    fetchHospitals();
   };
 
   // Search doctors
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    // Debounce search
     clearTimeout((window as any).searchTimeout);
     (window as any).searchTimeout = setTimeout(() => {
       fetchDoctors();
@@ -684,7 +688,6 @@ export default function BookAppointmentPage() {
         {/* Booking Content */}
         <div className="max-w-[1200px] mx-auto px-4 py-8">
           {bookingSuccess ? (
-            // Success Message
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center max-w-2xl mx-auto">
               <div className="flex justify-center mb-6">
                 <CheckIcon />
@@ -713,10 +716,8 @@ export default function BookAppointmentPage() {
                     <p className="font-semibold text-[#1a3a5c]">{selectedSlot?.start_time.slice(0, 5)}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Mode</p>
-                    <p className="font-semibold text-[#1a3a5c]">
-                      {consultationType === 'hospital_visit' ? 'Hospital Visit' : 'Video Consultation'}
-                    </p>
+                    <p className="text-gray-500">Fees</p>
+                    <p className="font-semibold text-[#1a3a5c]">₹{selectedDoctor?.fees}</p>
                   </div>
                 </div>
               </div>
@@ -729,14 +730,13 @@ export default function BookAppointmentPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Main Content - Left Side (2 columns) */}
+              {/* Main Content */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Step 1: Doctor Selection */}
                 {currentStep === 1 && (
                   <div className="space-y-4">
                     <h2 className="text-xl font-bold text-[#1a3a5c] mb-4">Select a Doctor</h2>
                     
-                    {/* Search Bar */}
                     <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
                       <div className="flex items-center gap-3">
                         <SearchIcon />
@@ -761,7 +761,6 @@ export default function BookAppointmentPage() {
                       </div>
                     </div>
 
-                    {/* Loading State */}
                     {isLoadingDoctors ? (
                       <div className="flex justify-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1a9fa8]"></div>
@@ -793,8 +792,7 @@ export default function BookAppointmentPage() {
                                 </div>
                                 <div className="flex-1">
                                   <h3 className="text-lg font-bold text-[#1a1a1a]">{doctor.name}</h3>
-                                  <p className="text-sm text-gray-600">{doctor.designation}</p>
-                                  <p className="text-sm text-gray-500">{doctor.hospital_name}</p>
+                                  <p className="text-sm text-gray-600">{doctor.degree} | {doctor.specialization}</p>
                                   <div className="flex items-center gap-4 mt-3 text-sm">
                                     <span className="flex items-center gap-1 text-gray-600">
                                       <CalendarIcon /> {doctor.experience} Years
@@ -822,8 +820,8 @@ export default function BookAppointmentPage() {
                 {/* Step 2: Schedule Selection */}
                 {currentStep === 2 && selectedDoctor && (
                   <div className="space-y-6">
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
-                      <div className="flex items-center gap-4 mb-4">
+                    <div className="bg-white rounded-xl border border-gray-200 p-6">
+                      <div className="flex items-center gap-4 mb-6">
                         <button
                           onClick={() => setCurrentStep(1)}
                           className="text-gray-500 hover:text-[#1a9fa8] transition-colors"
@@ -847,118 +845,184 @@ export default function BookAppointmentPage() {
                         </div>
                         <div>
                           <h3 className="font-bold text-[#1a3a5c]">{selectedDoctor.name}</h3>
-                          <p className="text-sm text-gray-600">{selectedDoctor.designation}</p>
+                          <p className="text-sm text-gray-600">{selectedDoctor.degree} | {selectedDoctor.specialization}</p>
                         </div>
                       </div>
 
-                      {/* Consultation Type */}
-                      <div className="mb-6">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Consultation Type</h4>
-                        <div className="flex gap-3">
-                          {selectedDoctor.consultation_mode !== 'video_consult' && (
-                            <button
-                              onClick={() => handleConsultationType('hospital_visit')}
-                              className={`flex-1 p-4 rounded-lg border-2 transition-colors ${
-                                consultationType === 'hospital_visit'
-                                  ? 'border-[#1a9fa8] bg-[#f0faf5]'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <HospitalIcon />
-                              <span className="block mt-2 font-semibold text-sm">Hospital Visit</span>
-                              <span className="block text-xs text-gray-500">Visit the hospital</span>
-                            </button>
-                          )}
-                          {selectedDoctor.consultation_mode !== 'hospital_visit' && (
-                            <button
-                              onClick={() => handleConsultationType('video_consult')}
-                              className={`flex-1 p-4 rounded-lg border-2 transition-colors ${
-                                consultationType === 'video_consult'
-                                  ? 'border-[#1a9fa8] bg-[#f0faf5]'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <VideoIcon />
-                              <span className="block mt-2 font-semibold text-sm">Video Consult</span>
-                              <span className="block text-xs text-gray-500">Online consultation</span>
-                            </button>
+                      {/* Date Selection with Month Navigation */}
+                      <div className="mb-8">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-base font-semibold text-[#1a3a5c]">Select Date</h4>
+                          {selectedDate && (
+                            <span className="text-sm text-[#1a9fa8] font-medium">
+                              {new Date(selectedDate).toLocaleDateString('en-US', { 
+                                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                              })}
+                            </span>
                           )}
                         </div>
-                      </div>
-
-                      {/* Hospital Selection (only for hospital visits) */}
-                      {consultationType === 'hospital_visit' && hospitals.length > 1 && (
-                        <div className="mb-6">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Select Hospital</h4>
-                          <select
-                            value={selectedHospital?.id || ''}
-                            onChange={(e) => {
-                              const hospital = hospitals.find(h => h.id === e.target.value);
-                              setSelectedHospital(hospital || null);
-                              setSelectedSlot(null);
-                              setSelectedDate('');
-                              setAvailableSlots([]);
-                            }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a9fa8]"
+                        
+                        {/* Month Navigation */}
+                        <div className="flex items-center justify-between mb-4">
+                          <button
+                            onClick={goToPreviousMonth}
+                            disabled={!canGoPreviousMonth()}
+                            className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:border-[#1a9fa8] transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-sm font-medium text-gray-700"
                           >
-                            {hospitals.map(hospital => (
-                              <option key={hospital.id} value={hospital.id}>
-                                {hospital.name} - {hospital.city}
-                              </option>
-                            ))}
-                          </select>
+                            <ChevronLeftIcon className="w-4 h-4" />
+                            Previous
+                          </button>
+                          <span className="text-lg font-bold text-[#1a3a5c]">
+                            {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                          </span>
+                          <button
+                            onClick={goToNextMonth}
+                            disabled={!canGoNextMonth()}
+                            className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:border-[#1a9fa8] transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-sm font-medium text-gray-700"
+                          >
+                            Next
+                            <ChevronLeftIcon className="w-4 h-4 rotate-180" />
+                          </button>
                         </div>
-                      )}
-
-                      {/* Date Selection */}
-                      <div className="mb-6">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Select Date</h4>
-                        <div className="flex gap-2 overflow-x-auto pb-2">
-                          {next7Days.map((day) => (
-                            <button
-                              key={day.date}
-                              onClick={() => handleDateSelect(day.date)}
-                              className={`flex-shrink-0 w-20 py-3 rounded-lg border-2 transition-colors ${
-                                selectedDate === day.date
-                                  ? 'border-[#1a9fa8] bg-[#f0faf5]'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <span className="block text-xs text-gray-500">{day.dayName}</span>
-                              <span className="block text-lg font-bold text-[#1a3a5c]">{day.dayNumber}</span>
-                              <span className="block text-xs text-gray-500">{day.month}</span>
-                            </button>
+                        
+                        {/* Day Names */}
+                        <div className="grid grid-cols-7 gap-1 mb-2">
+                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                            <div key={day} className="text-center text-xs font-semibold text-gray-500 py-1">
+                              {day}
+                            </div>
                           ))}
+                        </div>
+                        
+                        {/* Calendar Grid */}
+                        <div className="grid grid-cols-7 gap-1">
+                          {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() }, (_, i) => (
+                            <div key={`empty-${i}`} className="py-2" />
+                          ))}
+                          
+                          {monthDays.map((day) => {
+                            const isSelected = selectedDate === day.date;
+                            const isToday = day.date === new Date().toISOString().split('T')[0];
+                            
+                            return (
+                              <button
+                                key={day.date}
+                                disabled={day.isPast}
+                                onClick={() => handleDateSelect(day.date)}
+                                className={`relative flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 ${
+                                  isSelected
+                                    ? 'bg-[#1a9fa8] text-white shadow-md transform scale-105'
+                                    : day.isPast
+                                    ? 'text-gray-300 cursor-not-allowed'
+                                    : 'hover:bg-gray-100 text-gray-700'
+                                }`}
+                              >
+                                {isToday && !isSelected && (
+                                  <span className="absolute -top-1 w-2 h-2 bg-[#e85d26] rounded-full"></span>
+                                )}
+                                <span className={`text-sm font-semibold ${isSelected ? 'text-white' : ''}`}>
+                                  {day.dayNumber}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        {/* Legend */}
+                        <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <span className="w-2 h-2 bg-[#e85d26] rounded-full"></span> Today
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="w-2 h-2 bg-[#1a9fa8] rounded-full"></span> Selected
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="w-2 h-2 bg-gray-300 rounded-full"></span> Not Available
+                          </span>
                         </div>
                       </div>
 
                       {/* Time Slots */}
                       {selectedDate && (
                         <div>
-                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Available Time Slots</h4>
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-base font-semibold text-[#1a3a5c]">Available Time Slots</h4>
+                            {availableSlots.length > 0 && (
+                              <span className="text-sm text-gray-500">
+                                {availableSlots.length} slots available
+                              </span>
+                            )}
+                          </div>
+                          
                           {isLoading ? (
-                            <div className="flex items-center justify-center py-8">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1a9fa8]"></div>
+                            <div className="flex items-center justify-center py-12">
+                              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a9fa8]"></div>
                             </div>
                           ) : availableSlots.length === 0 ? (
-                            <p className="text-gray-500 text-sm">No slots available for this date. Please select another date.</p>
+                            <div className="text-center py-8">
+                              <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-3">
+                                <CalendarIcon />
+                              </div>
+                              <p className="text-gray-600 font-medium">No slots available for this date</p>
+                              <p className="text-sm text-gray-500 mt-1">Please select another date</p>
+                            </div>
                           ) : (
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                              {availableSlots.map((slot) => (
-                                <button
-                                  key={slot.id}
-                                  onClick={() => handleSlotSelect(slot)}
-                                  className={`py-2 px-2 rounded-lg text-sm font-medium transition-colors ${
-                                    selectedSlot?.id === slot.id
-                                      ? 'bg-[#1a9fa8] text-white'
-                                      : 'bg-white border border-gray-200 hover:border-[#1a9fa8] text-gray-700'
-                                  }`}
-                                >
-                                  {slot.start_time.slice(0, 5)}
-                                </button>
-                              ))}
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                              {availableSlots.map((slot) => {
+                                const isSelected = selectedSlot?.id === slot.id;
+                                const timeLabel = slot.start_time.slice(0, 5);
+                                
+                                return (
+                                  <button
+                                    key={slot.id}
+                                    onClick={() => handleSlotSelect(slot)}
+                                    className={`relative py-3 px-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                                      isSelected
+                                        ? 'bg-[#1a9fa8] text-white shadow-md transform scale-105'
+                                        : 'bg-white border-2 border-gray-200 hover:border-[#1a9fa8] text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                  >
+                                    {isSelected && (
+                                      <span className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-0.5">
+                                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none">
+                                          <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      </span>
+                                    )}
+                                    <span className="block">{timeLabel}</span>
+                                    <span className={`block text-xs mt-1 ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
+                                      {slot.slot_type === 'video' ? 'Video' : 'Visit'}
+                                    </span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
+                        </div>
+                      )}
+
+                      {/* Selected Slot Summary */}
+                      {selectedSlot && selectedDate && (
+                        <div className="mt-6 p-4 bg-[#f0faf5] border border-[#1a9fa8] rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-[#1a3a5c]">Selected Appointment</p>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {new Date(selectedDate).toLocaleDateString('en-US', { 
+                                  weekday: 'long', day: 'numeric', month: 'long' 
+                                })} at {selectedSlot.start_time.slice(0, 5)}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setSelectedSlot(null);
+                                sessionStorage.removeItem('selectedSlot');
+                              }}
+                              className="text-red-500 hover:text-red-700 text-sm font-medium"
+                            >
+                              Change
+                            </button>
+                          </div>
                         </div>
                       )}
 
@@ -966,8 +1030,14 @@ export default function BookAppointmentPage() {
                       {selectedSlot && (
                         <div className="mt-6">
                           <button
-                            onClick={() => setCurrentStep(3)}
-                            className="w-full bg-[#1a9fa8] text-white font-semibold py-3 rounded-lg hover:bg-[#158791] transition-colors"
+                            onClick={() => {
+                              if (selectedSlot) {
+                                sessionStorage.setItem('selectedSlot', JSON.stringify(selectedSlot));
+                                sessionStorage.setItem('selectedDate', selectedDate);
+                                setCurrentStep(3);
+                              }
+                            }}
+                            className="w-full bg-[#1a9fa8] text-white font-semibold py-4 rounded-lg hover:bg-[#158791] transition-colors text-base"
                           >
                             Continue to Patient Details
                           </button>
@@ -978,7 +1048,7 @@ export default function BookAppointmentPage() {
                 )}
 
                 {/* Step 3: Patient Details */}
-                {currentStep === 3 && selectedDoctor && selectedSlot && (
+                {currentStep === 3 && selectedDoctor && (
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
                     <button
                       onClick={() => setCurrentStep(2)}
@@ -989,11 +1059,29 @@ export default function BookAppointmentPage() {
                     
                     <h2 className="text-xl font-bold text-[#1a3a5c] mb-6">Patient Details</h2>
                     
+                    {selectedSlot ? (
+                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-gray-600">
+                          <span className="font-semibold">Selected Slot:</span> {selectedSlot.start_time.slice(0, 5)} on {selectedDate}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mb-4 p-3 bg-yellow-50 rounded-lg">
+                        <p className="text-sm text-yellow-700">
+                          No slot selected. Please go back and select a time slot.
+                        </p>
+                        <button
+                          onClick={() => setCurrentStep(2)}
+                          className="mt-2 text-[#1a9fa8] hover:underline"
+                        >
+                          Go back to schedule
+                        </button>
+                      </div>
+                    )}
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                          Full Name *
-                        </label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name *</label>
                         <input
                           type="text"
                           name="patient_name"
@@ -1010,9 +1098,7 @@ export default function BookAppointmentPage() {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                          Phone Number *
-                        </label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number *</label>
                         <input
                           type="tel"
                           name="patient_phone"
@@ -1029,9 +1115,7 @@ export default function BookAppointmentPage() {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                          Email Address
-                        </label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
                         <input
                           type="email"
                           name="patient_email"
@@ -1049,9 +1133,7 @@ export default function BookAppointmentPage() {
                       
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            Age
-                          </label>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Age</label>
                           <input
                             type="number"
                             name="patient_age"
@@ -1067,9 +1149,7 @@ export default function BookAppointmentPage() {
                           )}
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            Gender
-                          </label>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Gender</label>
                           <select
                             name="patient_gender"
                             value={formData.patient_gender}
@@ -1084,9 +1164,7 @@ export default function BookAppointmentPage() {
                       </div>
                       
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                          Additional Message
-                        </label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Symptoms / Message</label>
                         <textarea
                           name="patient_message"
                           value={formData.patient_message}
@@ -1101,7 +1179,7 @@ export default function BookAppointmentPage() {
                     <div className="mt-6">
                       <button
                         onClick={handleSubmit}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !selectedSlot}
                         className="w-full bg-[#1a9fa8] text-white font-semibold py-3 rounded-lg hover:bg-[#158791] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isSubmitting ? 'Booking...' : 'Confirm Appointment'}
@@ -1111,7 +1189,7 @@ export default function BookAppointmentPage() {
                 )}
               </div>
 
-              {/* Summary Sidebar - Right Side (1 column) */}
+              {/* Summary Sidebar */}
               <div className="space-y-4">
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <h3 className="font-bold text-[#1a3a5c] mb-4">Booking Summary</h3>
@@ -1136,24 +1214,14 @@ export default function BookAppointmentPage() {
                         </div>
                         <div>
                           <p className="font-semibold text-sm">{selectedDoctor.name}</p>
-                          <p className="text-xs text-gray-500">{selectedDoctor.designation}</p>
+                          <p className="text-xs text-gray-500">{selectedDoctor.degree} | {selectedDoctor.specialization}</p>
                         </div>
                       </div>
                       
                       <div className="border-t border-gray-200 pt-3 space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Hospital</span>
-                          <span className="font-medium">{selectedHospital?.name || 'Sant Haridas Hospital'}</span>
-                        </div>
-                        <div className="flex justify-between">
                           <span className="text-gray-600">Consultation Fee</span>
                           <span className="font-medium">₹{selectedDoctor.fees}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Mode</span>
-                          <span className="font-medium">
-                            {consultationType === 'hospital_visit' ? 'Hospital Visit' : 'Video Consult'}
-                          </span>
                         </div>
                         {selectedDate && (
                           <div className="flex justify-between">
@@ -1176,7 +1244,6 @@ export default function BookAppointmentPage() {
                   )}
                 </div>
 
-                {/* Emergency Contact */}
                 <div className="bg-[#1a3a5c] text-white rounded-xl p-5">
                   <h3 className="font-bold mb-2">Emergency Contact</h3>
                   <p className="text-sm text-white/80 mb-3">24/7 Emergency Services Available</p>

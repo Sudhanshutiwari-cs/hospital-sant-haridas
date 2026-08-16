@@ -240,19 +240,6 @@ function DoctorCard({ doctor, onBookAppointment }: { doctor: Doctor; onBookAppoi
             </div>
           </div>
         </div>
-
-        {/* Optional location */}
-        {doctor.locations && (
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1 text-[13px] text-gray-500">
-              <LocationIcon />
-              Available at{" "}
-              <span className="text-[#1a6fa8] font-semibold mx-0.5">{doctor.locations} different</span>
-              {" "}locations
-            </div>
-            <p className="text-[13px] text-gray-500 font-medium pl-5">{doctor.locationName}</p>
-          </div>
-        )}
       </div>
 
       {/* Card footer: action buttons */}
@@ -371,6 +358,19 @@ function DoctorsFaqSection() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+// Helper function to generate slug from name and ID
+const generateSlug = (name: string, id: string): string => {
+  const nameSlug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single
+    .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+  
+  // Add first 8 characters of ID to make slug unique
+  return `${nameSlug}-${id.substring(0, 8)}`;
+};
+
 export default function DoctorsPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -397,14 +397,26 @@ export default function DoctorsPage() {
 
   const fetchSpecialities = async () => {
     try {
+      // Fetch unique specializations from doctors table
       const { data, error } = await supabase
-        .from('specialities')
-        .select('id, name, slug')
+        .from('doctors')
+        .select('specialization')
         .eq('is_active', true)
-        .order('sort_order', { ascending: true });
+        .not('specialization', 'is', null);
 
       if (error) throw error;
-      setSpecialities(data || []);
+
+      // Get unique specializations
+      const uniqueSpecialities = [...new Set((data || []).map(d => d.specialization))]
+        .filter(Boolean)
+        .map(name => ({
+          id: name,
+          name: name,
+          slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      setSpecialities(uniqueSpecialities);
     } catch (err) {
       console.error('Error fetching specialities:', err);
     }
@@ -419,57 +431,55 @@ export default function DoctorsPage() {
         .from('doctors')
         .select(`
           id,
-          slug,
-          name,
-          designation,
-          hospital_id,
-          speciality_bold,
-          speciality_light,
+          full_name,
+          email,
+          phone,
+          degree,
+          specialization,
           experience_years,
           consultation_fee,
-          photo_url,
-          consultation_mode,
+          profile_image_url,
           is_active,
-          sort_order,
-          hospitals (
-            id,
-            name
-          )
+          about
         `, { count: 'exact' })
         .eq('is_active', true)
-        .order('sort_order', { ascending: true })
-        .order('name', { ascending: true });
+        .order('full_name', { ascending: true });
 
       // Apply search filter
       if (search.trim()) {
         const searchTerm = `%${search.trim()}%`;
-        query = query.or(`name.ilike.${searchTerm},designation.ilike.${searchTerm},speciality_bold.ilike.${searchTerm}`);
+        query = query.or(`full_name.ilike.${searchTerm},degree.ilike.${searchTerm},specialization.ilike.${searchTerm}`);
       }
 
       // Apply speciality filter
       if (activeSpeciality !== "All") {
-        query = query.eq('speciality_bold', activeSpeciality);
+        query = query.eq('specialization', activeSpeciality);
       }
 
       const { data, error: fetchError, count } = await query;
 
       if (fetchError) throw fetchError;
 
-      // Transform data
-      const transformedDoctors: Doctor[] = (data || []).map((doc: any) => ({
-        id: doc.id,
-        slug: doc.slug,
-        name: doc.name,
-        designation: doc.designation,
-        hospital_id: doc.hospital_id,
-        hospital_name: doc.hospitals?.name || 'Sant Haridas Hospital',
-        specialtyBold: doc.speciality_bold,
-        specialtyLight: doc.speciality_light,
-        experience: doc.experience_years,
-        fees: doc.consultation_fee,
-        image: doc.photo_url || '',
-        consultation_mode: doc.consultation_mode,
-      }));
+      // Transform data to match your Doctor type
+      const transformedDoctors: Doctor[] = (data || []).map((doc: any) => {
+        const fullName = doc.full_name || '';
+        const slug = generateSlug(fullName, doc.id);
+        
+        return {
+          id: doc.id,
+          slug: slug, // Generate unique slug with ID
+          name: fullName,
+          designation: doc.degree || 'Doctor',
+          hospital_name: 'Sant Haridas Hospital',
+          hospital_id: '', // No hospital relation in new schema
+          specialtyBold: doc.specialization || 'General',
+          specialtyLight: doc.degree || '',
+          experience: doc.experience_years || 0,
+          fees: doc.consultation_fee || 0,
+          image: doc.profile_image_url || '',
+          consultation_mode: 'both', // Default value as this column doesn't exist in new schema
+        };
+      });
 
       setDoctors(transformedDoctors);
       setTotalCount(count || 0);
@@ -708,6 +718,7 @@ export default function DoctorsPage() {
               </svg>
               Book an Appointment
             </Link>
+            
           </div>
         </div>
       </footer>

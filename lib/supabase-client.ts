@@ -3,15 +3,17 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // Check if environment variables are defined
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables. Check your .env.local file.')
 }
 
+// Client-side Supabase client
 export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseAnonKey || '',
+  supabaseUrl || 'https://wkhqzpeijlkzonbuamik.supabase.co',
+  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndraHF6cGVpamxrem9uYnVhbWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwODY0OTQsImV4cCI6MjEwMTY2MjQ5NH0.CbYRmeZLzp6dR9koh5S7cK69sfDCe7ouN1bsqvhza6g',
   {
     auth: {
       persistSession: true,
@@ -22,5 +24,17 @@ export const supabase = createClient(
         'Content-Type': 'application/json',
       },
     },
+  }
+)
+
+// Server-side Supabase client with service role
+export const supabaseAdmin = createClient(
+  supabaseUrl || 'https://wkhqzpeijlkzonbuamik.supabase.co',
+  supabaseServiceKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndraHF6cGVpamxrem9uYnVhbWlrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjA4NjQ5NCwiZXhwIjoyMTAxNjYyNDk0fQ.ugRZ3wEf_Py9KP2HvyV22WjBYdEKjHghkfP5CnoWU5w',
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
   }
 )
