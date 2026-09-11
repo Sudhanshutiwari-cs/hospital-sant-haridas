@@ -74,7 +74,7 @@ export default function AppointmentsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
 
-  const [newAppointment, setNewAppointment] = useState({
+  const emptyAppointment = {
     doctor_id: '',
     patient_id: '',
     appointment_date: '',
@@ -83,9 +83,9 @@ export default function AppointmentsPage() {
     symptoms: '',
     payment_amount: 0,
     payment_method: 'cash',
-  });
+  };
 
-  const [newPatient, setNewPatient] = useState({
+  const emptyPatient = {
     full_name: '',
     phone: '',
     email: '',
@@ -95,16 +95,31 @@ export default function AppointmentsPage() {
     address: '',
     city: '',
     state: '',
-  });
+  };
+
+  const [newAppointment, setNewAppointment] = useState(emptyAppointment);
+  const [newPatient, setNewPatient] = useState(emptyPatient);
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  // Close modals on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowAddModal(false);
+        setShowDetailsModal(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   const fetchData = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         router.push('/login');
         return;
@@ -113,7 +128,7 @@ export default function AppointmentsPage() {
       // Check if doctor
       const { data: doctorData } = await supabase
         .from('doctors')
-        .select('id')
+        .select('*')
         .eq('user_id', session.user.id)
         .single();
 
@@ -124,15 +139,22 @@ export default function AppointmentsPage() {
           doctorId: doctorData.id,
         });
 
-        const { data: appointmentsData } = await supabase
-          .from('appointments')
-          .select('*')
-          .eq('doctor_id', doctorData.id)
-          .order('appointment_date', { ascending: false });
+        // Load this doctor's appointments + ALL doctors (for OPD sidebar)
+        const [appointmentsRes, doctorsRes] = await Promise.all([
+          supabase
+            .from('appointments')
+            .select('*')
+            .eq('doctor_id', doctorData.id)
+            .order('appointment_date', { ascending: false }),
+          supabase.from('doctors').select('*'),
+        ]);
 
-        setAppointments(appointmentsData || []);
-        
-        const patientIds = [...new Set((appointmentsData || []).map(a => a.patient_id).filter(Boolean))];
+        setAppointments(appointmentsRes.data || []);
+        setDoctors(doctorsRes.data || []);
+
+        const patientIds = [
+          ...new Set((appointmentsRes.data || []).map(a => a.patient_id).filter(Boolean)),
+        ];
         if (patientIds.length > 0) {
           const { data: patientsData } = await supabase
             .from('patients')
@@ -140,7 +162,7 @@ export default function AppointmentsPage() {
             .in('id', patientIds);
           setPatients(patientsData || []);
         }
-        
+
         setLoading(false);
         return;
       }
@@ -153,9 +175,13 @@ export default function AppointmentsPage() {
         .single();
 
       if (staffData) {
+        const roleName = Array.isArray((staffData as any).roles)
+          ? (staffData as any).roles[0]?.role_name
+          : (staffData as any).roles?.role_name;
+
         setCurrentUser({
           id: session.user.id,
-          role: staffData.roles?.role_name || 'receptionist',
+          role: roleName || 'receptionist',
         });
 
         const [appointmentsRes, doctorsRes, patientsRes] = await Promise.all([
@@ -194,35 +220,31 @@ export default function AppointmentsPage() {
       if (error) throw error;
 
       setSelectedPatient(data);
-      setNewAppointment({...newAppointment, patient_id: data.id});
+      setNewAppointment({ ...newAppointment, patient_id: data.id });
       setShowNewPatientForm(false);
-      setNewPatient({
-        full_name: '',
-        phone: '',
-        email: '',
-        date_of_birth: '',
-        gender: '',
-        blood_group: '',
-        address: '',
-        city: '',
-        state: '',
-      });
-      
+      setNewPatient(emptyPatient);
+
       fetchData();
     } catch (error) {
       console.error('Error creating patient:', error);
-      alert('Failed to create patient: ' + (error as any).message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert('Failed to create patient: ' + message);
     }
   };
 
   const createAppointment = async () => {
     try {
-      if (!newAppointment.doctor_id || !newAppointment.patient_id || !newAppointment.appointment_date || !newAppointment.appointment_time) {
+      if (
+        !newAppointment.doctor_id ||
+        !newAppointment.patient_id ||
+        !newAppointment.appointment_date ||
+        !newAppointment.appointment_time
+      ) {
         alert('Please fill in all required fields');
         return;
       }
 
-      // Generate appointment number (13 characters: APT + YYMMDD + 4 random)
+      // Generate appointment number (APT + YYMMDD + 4 random = 13 chars)
       const date = new Date();
       const year = date.getFullYear().toString().slice(-2);
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -230,7 +252,7 @@ export default function AppointmentsPage() {
       const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
       const appointmentNumber = `APT${year}${month}${day}${random}`;
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('appointments')
         .insert([{
           ...newAppointment,
@@ -247,20 +269,12 @@ export default function AppointmentsPage() {
       setSelectedPatient(null);
       setShowNewPatientForm(false);
       setPatientSearchTerm('');
+      setNewAppointment(emptyAppointment);
       fetchData();
-      setNewAppointment({
-        doctor_id: '',
-        patient_id: '',
-        appointment_date: '',
-        appointment_time: '',
-        appointment_type: 'consultation',
-        symptoms: '',
-        payment_amount: 0,
-        payment_method: 'cash',
-      });
     } catch (error) {
       console.error('Error creating appointment:', error);
-      alert('Failed to create appointment: ' + (error as any).message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert('Failed to create appointment: ' + message);
     }
   };
 
@@ -272,7 +286,6 @@ export default function AppointmentsPage() {
         .eq('id', id);
 
       if (error) throw error;
-
       fetchData();
     } catch (error) {
       console.error('Error updating appointment status:', error);
@@ -283,13 +296,16 @@ export default function AppointmentsPage() {
     setUpdatingPaymentId(id);
     try {
       const newStatus = currentStatus === 'paid' ? 'unpaid' : 'paid';
-
       const { error } = await supabase
         .from('appointments')
         .update({ payment_status: newStatus })
         .eq('id', id);
 
       if (error) throw error;
+
+      setSelectedAppointment(prev =>
+        prev && prev.id === id ? { ...prev, payment_status: newStatus } : prev
+      );
 
       fetchData();
     } catch (error) {
@@ -312,149 +328,515 @@ export default function AppointmentsPage() {
 
   const filteredPatients = patients.filter(patient => {
     const search = patientSearchTerm.toLowerCase();
-    return patient.full_name.toLowerCase().includes(search) ||
-           patient.phone?.toLowerCase().includes(search) ||
-           patient.email?.toLowerCase().includes(search);
+    return (
+      patient.full_name.toLowerCase().includes(search) ||
+      patient.phone?.toLowerCase().includes(search) ||
+      patient.email?.toLowerCase().includes(search)
+    );
   });
 
+  /**
+   * Print OPD slip — shows ALL hospital doctors in the sidebar,
+   * grouped by specialization, with the current doctor highlighted.
+   * Patient, appointment, and complaints data come from the DB.
+   */
   const printOPD = (appointment: Appointment) => {
-    const doctor = doctors.find(d => d.id === appointment.doctor_id);
     const patient = patients.find(p => p.id === appointment.patient_id);
-    
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>OPD Slip - ${appointment.appointment_number}</title>
-            <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { font-family: Arial, sans-serif; padding: 20px; background: #fff; }
-              .opd-container { max-width: 850px; margin: 0 auto; border: 2px solid #333; padding: 15px; min-height: 100vh; display: flex; flex-direction: column; }
-              .header { text-align: center; border-bottom: 3px double #333; padding-bottom: 12px; margin-bottom: 15px; }
-              .hospital-name { font-size: 28px; font-weight: bold; color: #1a56db; margin: 0 0 3px 0; letter-spacing: 1px; text-transform: uppercase; }
-              .hospital-tagline { font-size: 12px; color: #6b7280; margin: 0 0 8px 0; }
-              .opd-title { font-size: 18px; font-weight: bold; margin: 5px 0; text-transform: uppercase; letter-spacing: 2px; }
-              .appointment-info { display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; margin-top: 8px; }
-              .doctor-info { text-align: center; margin-bottom: 15px; padding: 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; }
-              .doctor-name { font-size: 18px; font-weight: bold; color: #1e40af; }
-              .doctor-specialization { font-size: 14px; color: #4b5563; margin-top: 2px; }
-              .patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; padding: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; }
-              .info-item { margin-bottom: 5px; }
-              .info-label { font-size: 11px; color: #6b7280; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
-              .info-value { font-size: 14px; font-weight: bold; color: #111827; }
-              .symptoms-section { margin-bottom: 12px; padding: 10px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 4px; }
-              .symptoms-label { font-size: 12px; font-weight: bold; color: #92400e; margin-bottom: 4px; text-transform: uppercase; }
-              .symptoms-text { font-size: 14px; color: #78350f; }
-              .vitals-section { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; padding: 8px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; }
-              .vital-item { text-align: center; }
-              .vital-label { font-size: 10px; color: #6b7280; text-transform: uppercase; }
-              .vital-value { font-size: 13px; font-weight: bold; margin-top: 2px; }
-              .advice-section { flex: 1; display: flex; flex-direction: column; margin: 10px 0; }
-              .advice-header { display: flex; gap: 20px; margin-bottom: 8px; }
-              .advice-label { font-size: 14px; font-weight: bold; color: #374151; text-transform: uppercase; letter-spacing: 1px; }
-              .advice-line { flex: 1; border-bottom: 1px solid #9ca3af; }
-              .advice-content { flex: 1; border: 1px dashed #d1d5db; background: #fefefe; min-height: 400px; padding: 10px; margin-bottom: 5px; }
-              .followup-section { margin: 5px 0; padding: 8px; border: 1px solid #e5e7eb; background: #fafafa; }
-              .followup-label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
-              .followup-content { min-height: 60px; }
-              .footer { text-align: center; border-top: 2px solid #333; padding-top: 10px; margin-top: auto; font-size: 11px; color: #6b7280; }
-              .footer-line { margin: 2px 0; }
-              @media print { body { padding: 0; } .opd-container { border: none; padding: 0; min-height: auto; } }
-              @page { size: A4; margin: 10mm; }
-            </style>
-          </head>
-          <body>
-            <div class="opd-container">
-              <div class="header">
-                <h1 class="hospital-name">Sant Haridas Hospital</h1>
-                <p class="hospital-tagline">Compassionate Care, Advanced Medicine</p>
-                <p class="opd-title">Out Patient Department (OPD) Slip</p>
-                <div class="appointment-info">
-                  <span>Appointment #: ${appointment.appointment_number}</span>
-                  <span>Date: ${appointment.appointment_date}</span>
-                  <span>Time: ${appointment.appointment_time}</span>
-                </div>
-              </div>
+    const currentDoctorId = appointment.doctor_id;
 
-              <div class="doctor-info">
-                <p class="doctor-name">Dr. ${doctor?.full_name || 'N/A'}</p>
-                <p class="doctor-specialization">${doctor?.specialization || ''} ${doctor?.degree ? '- ' + doctor.degree : ''}</p>
-              </div>
+    const escapeHtml = (value: unknown) =>
+      String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 
-              <div class="patient-info">
-                <div class="info-item">
-                  <div class="info-label">Patient Name</div>
-                  <div class="info-value">${patient?.full_name || 'N/A'}</div>
-                </div>
-                <div class="info-item">
-                  <div class="info-label">Age / Gender</div>
-                  <div class="info-value">${patient?.date_of_birth ? calculateAge(patient.date_of_birth) + ' years' : 'N/A'} / ${patient?.gender || 'N/A'}</div>
-                </div>
-                <div class="info-item">
-                  <div class="info-label">Phone</div>
-                  <div class="info-value">${patient?.phone || 'N/A'}</div>
-                </div>
-                <div class="info-item">
-                  <div class="info-label">Blood Group</div>
-                  <div class="info-value">${patient?.blood_group || 'N/A'}</div>
-                </div>
-                <div class="info-item" style="grid-column: 1 / -1;">
-                  <div class="info-label">Address</div>
-                  <div class="info-value">${[patient?.address, patient?.city, patient?.state].filter(Boolean).join(', ') || 'N/A'}</div>
-                </div>
-              </div>
+    const age = patient?.date_of_birth
+      ? `${calculateAge(patient.date_of_birth)} years`
+      : '';
+    const gender = patient?.gender || '';
+    const ageAndGender = [age, gender].filter(Boolean).join(' / ');
+    const address =
+      [patient?.address, patient?.city, patient?.state].filter(Boolean).join(', ') || '';
 
-              ${appointment.symptoms ? `
-                <div class="symptoms-section">
-                  <div class="symptoms-label">Chief Complaints / Symptoms</div>
-                  <div class="symptoms-text">${appointment.symptoms}</div>
-                </div>
-              ` : ''}
+    // Fallback static departments (used if the DB has no doctors)
+    const fallbackDepartments = [
+      { department: 'Eye', doctor: { name: 'Dr. Prateek Sehrawat', qualifications: ['MBBS, MS', 'Consultant', 'Ophthalmologist'] } },
+      { department: 'Obs & Gynae', doctor: { name: 'Dr. Mayura Baliyan', qualifications: ['MBBS, MS', 'Fellowship in Gynae', 'Laparoscopy', 'Consultant Gynaecologist'] } },
+      { department: 'Medicine', doctor: { name: 'Dr. Ajay Kumar', qualifications: ['MBBS, DNB', 'Consultant Physician'] } },
+      { department: 'Child', doctor: { name: 'Dr. Nitish Lavania', qualifications: ['MBBS, DCH', 'Child Specialist'] } },
+    ];
 
-              <div class="vitals-section">
-                <div class="vital-item"><div class="vital-label">BP</div><div class="vital-value">________</div></div>
-                <div class="vital-item"><div class="vital-label">Pulse</div><div class="vital-value">________</div></div>
-                <div class="vital-item"><div class="vital-label">Temp</div><div class="vital-value">________</div></div>
-                <div class="vital-item"><div class="vital-label">Weight</div><div class="vital-value">________</div></div>
-              </div>
+    type SidebarDepartment = {
+      department: string;
+      doctors: { id: string; name: string; qualifications: string[]; isCurrent: boolean }[];
+    };
 
-              <div class="advice-section">
-                <div class="advice-header">
-                  <span class="advice-label">Doctor's Advice / Prescription</span>
-                  <span class="advice-line"></span>
-                </div>
-                <div class="advice-content"><div style="min-height: 380px;"></div></div>
-              </div>
+    let sidebarDepartments: SidebarDepartment[] = [];
 
-              <div class="followup-section">
-                <div class="followup-label">Follow-up Instructions:</div>
-                <div class="followup-content"></div>
-              </div>
+    if (doctors.length > 0) {
+      const grouped = new Map<string, SidebarDepartment>();
+      doctors.forEach(doc => {
+        const dept = (doc.specialization || 'Consultant').trim();
+        const key = dept.toLowerCase();
+        if (!grouped.has(key)) {
+          grouped.set(key, { department: dept, doctors: [] });
+        }
+        const quals: string[] = [];
+        if (doc.degree) quals.push(doc.degree);
+        quals.push('Consultant');
+        grouped.get(key)!.doctors.push({
+          id: doc.id,
+          name: `Dr. ${doc.full_name}`,
+          qualifications: quals,
+          isCurrent: doc.id === currentDoctorId,
+        });
+      });
 
-              <div class="footer">
-                <p class="footer-line">This is a computer generated OPD slip</p>
-                <p class="footer-line"><strong>Sant Haridas Hospital</strong> | Contact: +91-XXXXXXXXXX | Email: info@santharidas.com</p>
-                <p class="footer-line">Address: [Hospital Address], [City], [State] - [PIN Code]</p>
-                <p class="footer-line" style="margin-top: 5px;">© ${new Date().getFullYear()} Sant Haridas Hospital. All Rights Reserved.</p>
+      sidebarDepartments = Array.from(grouped.values()).sort((a, b) => {
+        const aHasCurrent = a.doctors.some(d => d.isCurrent);
+        const bHasCurrent = b.doctors.some(d => d.isCurrent);
+        if (aHasCurrent && !bHasCurrent) return -1;
+        if (!aHasCurrent && bHasCurrent) return 1;
+        return a.department.localeCompare(b.department);
+      });
+    } else {
+      sidebarDepartments = fallbackDepartments.map(fd => ({
+        department: fd.department,
+        doctors: [{
+          id: '',
+          name: fd.doctor.name,
+          qualifications: fd.doctor.qualifications,
+          isCurrent: false,
+        }],
+      }));
+    }
+
+    const sidebarHtml = sidebarDepartments.map(dept => `
+      <section class="department">
+        <h2>${escapeHtml(dept.department)}</h2>
+        ${dept.doctors.map(doc => `
+          <div class="doctor-block ${doc.isCurrent ? 'current-doctor' : ''}">
+            <p class="doctor-name">${escapeHtml(doc.name)}</p>
+            ${doc.qualifications.map(q => `<p>${escapeHtml(q)}</p>`).join('')}
+          </div>
+        `).join('')}
+      </section>
+    `).join('');
+
+    const printWindow = window.open('', '_blank', 'width=900,height=1100');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>OPD Slip - ${escapeHtml(appointment.appointment_number)}</title>
+        <style>
+          :root {
+            --paper: #ffffff;
+            --ink: #171717;
+            --brown: #814b38;
+            --green: #12634e;
+          }
+
+          * { box-sizing: border-box; }
+
+          html, body {
+            margin: 0;
+            min-height: 100%;
+            background: #d8d8d8;
+            color: var(--ink);
+            font-family: Arial, Helvetica, sans-serif;
+          }
+
+          body { padding: 24px; }
+
+          .opd-sheet {
+            position: relative;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            overflow: hidden;
+            background: var(--paper);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+          }
+
+          .letterhead {
+            position: relative;
+            display: grid;
+            grid-template-columns: 43mm 1fr;
+            min-height: 43mm;
+            padding: 7mm 8mm 0;
+          }
+
+          .brand-mark {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1mm;
+          }
+
+          .exact-logo {
+            width: 38mm;
+            height: 29mm;
+            background: var(--paper);
+          }
+
+          .exact-logo img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+          }
+
+          .hospital-details {
+            position: relative;
+            padding-top: 2mm;
+          }
+
+          .mobile {
+            position: absolute;
+            top: -5mm;
+            right: 0;
+            font-size: 12pt;
+            font-weight: 700;
+          }
+
+          h1 {
+            margin: 0;
+            padding-bottom: 1mm;
+            border-bottom: 0.7mm solid var(--green);
+            color: var(--brown);
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 27pt;
+            font-weight: 700;
+            letter-spacing: 0.4mm;
+            line-height: 1.15;
+            text-align: center;
+            white-space: nowrap;
+          }
+
+          .address {
+            margin: 1.5mm 0 0;
+            font-size: 11.5pt;
+            font-weight: 700;
+            line-height: 1.35;
+            text-align: center;
+          }
+
+          .record-fields {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 3mm;
+            margin-top: 3mm;
+            font-size: 10.5pt;
+            font-weight: 700;
+          }
+
+          .field {
+            display: flex;
+            align-items: flex-end;
+            gap: 1.5mm;
+          }
+
+          .field-line {
+            display: inline-block;
+            width: 34mm;
+            min-height: 5mm;
+            border-bottom: 0.4mm dotted var(--ink);
+          }
+
+          .form-body {
+            display: grid;
+            grid-template-columns: 53mm 1fr;
+            min-height: 247mm;
+            margin-top: 0;
+          }
+
+          .sidebar {
+            padding: 6mm 4mm 10mm 3.5mm;
+            border-right: 0.8mm solid var(--green);
+          }
+
+          .department { margin-bottom: 6mm; }
+
+          .department h2,
+          .facilities h2 {
+            display: inline-block;
+            margin: 0 0 1.2mm;
+            border-bottom: 0.4mm solid var(--brown);
+            color: var(--brown);
+            font-size: 12pt;
+            font-weight: 500;
+            line-height: 1.1;
+            text-transform: uppercase;
+          }
+
+          .department p {
+            margin: 0;
+            font-size: 8.6pt;
+            font-weight: 700;
+            line-height: 1.2;
+            text-transform: uppercase;
+          }
+
+          .department .doctor-name {
+            text-transform: none;
+            font-size: 9.2pt;
+          }
+
+          .doctor-block { margin-bottom: 2mm; }
+          .doctor-block:last-child { margin-bottom: 0; }
+
+          .doctor-block.current-doctor {
+            padding: 1mm 1.5mm;
+            margin-left: -1.5mm;
+            background: #fdf6d8;
+            border-left: 0.8mm solid var(--brown);
+            border-radius: 0.8mm;
+          }
+
+          .facilities { margin-top: 4mm; }
+
+          .facilities ul {
+            display: flex;
+            flex-direction: column;
+            gap: 4mm;
+            margin: 3mm 0 0;
+            padding: 0;
+            list-style: none;
+          }
+
+          .facilities li {
+            font-size: 12pt;
+            font-weight: 700;
+            line-height: 1.15;
+            text-transform: uppercase;
+          }
+
+          .facilities li small {
+            display: block;
+            margin-top: 1mm;
+            font-size: 8pt;
+          }
+
+          .writing-area {
+            min-height: 247mm;
+            padding: 6mm 6mm 16mm;
+          }
+
+          .patient-card {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 0.8mm 4mm;
+            padding: 1.2mm 2mm;
+            border: 0.35mm solid #c9c9c9;
+            border-radius: 1.5mm;
+          }
+
+          .patient-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4mm;
+            min-width: 0;
+          }
+
+          .patient-field.address-field { grid-column: 1 / -1; }
+
+          .patient-field label,
+          .complaints-box label {
+            color: #414141;
+            font-size: 7pt;
+            font-weight: 600;
+            letter-spacing: 0.15mm;
+            text-transform: uppercase;
+          }
+
+          .patient-field .value {
+            min-height: 3.5mm;
+            padding: 0;
+            color: #161616;
+            font-size: 8pt;
+            font-weight: 700;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+          }
+
+          .complaints-box {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8mm;
+            min-height: 13mm;
+            margin-top: 2mm;
+            padding: 1.5mm 2mm;
+            border: 0.4mm solid #d9a321;
+            border-radius: 1.5mm;
+          }
+
+          .complaints-box label {
+            color: var(--brown);
+            font-weight: 700;
+          }
+
+          .complaints-text {
+            flex: 1;
+            min-height: 6mm;
+            color: #161616;
+            font-size: 8pt;
+            line-height: 1.5;
+            white-space: pre-wrap;
+          }
+
+          .prescription-notes {
+            min-height: 174mm;
+            padding-top: 5mm;
+          }
+
+          .sheet-footer {
+            position: absolute;
+            right: 8mm;
+            bottom: 5mm;
+            left: 61mm;
+            padding-top: 2mm;
+            border-top: 0.4mm solid var(--green);
+            color: var(--brown);
+            font-size: 8.5pt;
+            font-weight: 700;
+            letter-spacing: 0.2mm;
+            text-align: center;
+          }
+
+          @page {
+            size: A4 portrait;
+            margin: 0;
+          }
+
+          @media print {
+            html, body {
+              width: 210mm;
+              height: 297mm;
+              background: var(--paper);
+            }
+            body { padding: 0; }
+            .opd-sheet {
+              margin: 0;
+              box-shadow: none;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <main class="opd-sheet" aria-label="Sant Haridas Hospital OPD form">
+          <header class="letterhead">
+            <div class="brand-mark">
+              <div class="exact-logo">
+                <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Sant%20haridas%20hospital%20logo_page-0001-9QC5utiID4qsGhzBl3IFnOffdM5PBD.jpg" alt="Sant Haridas Hospital logo">
               </div>
             </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+
+            <div class="hospital-details">
+              <div class="mobile">Mob. : 9540740947</div>
+              <h1>SANT HARIDAS HOSPITAL</h1>
+              <p class="address">Opp. Air Force Station, Bani Camp, Najafgarh, New Delhi - 110043</p>
+              <div class="record-fields">
+                <div class="field">Rec. No. <span class="field-line">${escapeHtml(appointment.appointment_number)}</span></div>
+                <div class="field">Date <span class="field-line">${escapeHtml(appointment.appointment_date)}</span></div>
+              </div>
+            </div>
+          </header>
+
+          <section class="form-body">
+            <aside class="sidebar" aria-label="Hospital departments and facilities">
+              ${sidebarHtml}
+
+              <section class="facilities">
+                <h2>Facilities</h2>
+                <ul>
+                  <li>Smartlens<small>Optical Shop</small></li>
+                  <li>Path Lab</li>
+                  <li>Pharmacy</li>
+                  <li>Physiotherapy</li>
+                </ul>
+              </section>
+            </aside>
+
+            <div class="writing-area">
+              <section class="patient-card" aria-label="Patient details">
+                <div class="patient-field">
+                  <label>Patient name</label>
+                  <div class="value">${escapeHtml(patient?.full_name || '')}</div>
+                </div>
+                <div class="patient-field">
+                  <label>Age / Gender</label>
+                  <div class="value">${escapeHtml(ageAndGender)}</div>
+                </div>
+                <div class="patient-field">
+                  <label>Phone</label>
+                  <div class="value">${escapeHtml(patient?.phone || '')}</div>
+                </div>
+                <div class="patient-field">
+                  <label>Blood group</label>
+                  <div class="value">${escapeHtml(patient?.blood_group || '')}</div>
+                </div>
+                <div class="patient-field address-field">
+                  <label>Address</label>
+                  <div class="value">${escapeHtml(address)}</div>
+                </div>
+              </section>
+
+              <section class="complaints-box" aria-label="Chief complaints and symptoms">
+                <label>Chief complaints / symptoms</label>
+                <div class="complaints-text">${escapeHtml(appointment.symptoms || '')}</div>
+              </section>
+
+              <div class="prescription-notes" aria-label="OPD prescription writing area"></div>
+            </div>
+          </section>
+
+          <footer class="sheet-footer">
+            Sant Haridas Hospital &nbsp;|&nbsp; Mob.: 9540740947
+          </footer>
+        </main>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    const templateImage = printWindow.document.querySelector<HTMLImageElement>('.exact-logo img');
+    const openPrintDialog = () => {
+      printWindow.focus();
       printWindow.print();
+    };
+
+    if (templateImage?.complete) {
+      window.setTimeout(openPrintDialog, 150);
+    } else if (templateImage) {
+      templateImage.addEventListener('load', openPrintDialog, { once: true });
+      templateImage.addEventListener('error', openPrintDialog, { once: true });
+    } else {
+      openPrintDialog();
     }
   };
 
   const filteredAppointments = appointments.filter(app => {
     const matchesStatus = filterStatus === 'all' || app.status === filterStatus;
     const matchesPayment = filterPayment === 'all' || app.payment_status === filterPayment;
-    const matchesSearch = searchTerm === '' || 
+
+    const patient = patients.find(p => p.id === app.patient_id);
+    const doctor = doctors.find(d => d.id === app.doctor_id);
+
+    const matchesSearch =
+      searchTerm === '' ||
       app.appointment_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctors.find(d => d.id === app.doctor_id)?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patients.find(p => p.id === app.patient_id)?.full_name.toLowerCase().includes(searchTerm.toLowerCase());
+      doctor?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient?.phone?.toLowerCase().includes(searchTerm.toLowerCase());
+
     return matchesStatus && matchesPayment && matchesSearch;
   });
 
@@ -569,7 +951,7 @@ export default function AppointmentsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="font-medium">${appointment.payment_amount || 0}</div>
+                      <div className="font-medium">₹{appointment.payment_amount || 0}</div>
                       <button
                         onClick={() => togglePaymentStatus(appointment.id, appointment.payment_status)}
                         disabled={updatingPaymentId === appointment.id}
@@ -621,15 +1003,17 @@ export default function AppointmentsPage() {
 
       {/* Add Appointment Modal */}
       {showAddModal && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setShowAddModal(false)}
         >
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-          
-          <div 
+
+          <div
             className="relative bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
           >
             <h2 className="text-xl font-bold mb-4">New Appointment</h2>
             <div className="space-y-4">
@@ -642,7 +1026,7 @@ export default function AppointmentsPage() {
                     const doctorId = e.target.value;
                     const selectedDoctor = doctors.find(d => d.id === doctorId);
                     let fee = 0;
-                    
+
                     if (selectedDoctor) {
                       if (newAppointment.appointment_type === 'follow_up') {
                         fee = selectedDoctor.follow_up_fee || selectedDoctor.consultation_fee || 0;
@@ -650,7 +1034,7 @@ export default function AppointmentsPage() {
                         fee = selectedDoctor.consultation_fee || 0;
                       }
                     }
-                    
+
                     setNewAppointment({
                       ...newAppointment,
                       doctor_id: doctorId,
@@ -671,14 +1055,14 @@ export default function AppointmentsPage() {
               {/* Patient Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Patient *</label>
-                
+
                 <div className="flex gap-2 mb-2">
                   <button
                     type="button"
                     onClick={() => {
                       setShowNewPatientForm(false);
                       setSelectedPatient(null);
-                      setNewAppointment({...newAppointment, patient_id: ''});
+                      setNewAppointment({ ...newAppointment, patient_id: '' });
                     }}
                     className={`px-3 py-1.5 text-sm rounded-lg ${
                       !showNewPatientForm ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
@@ -691,7 +1075,7 @@ export default function AppointmentsPage() {
                     onClick={() => {
                       setShowNewPatientForm(true);
                       setSelectedPatient(null);
-                      setNewAppointment({...newAppointment, patient_id: ''});
+                      setNewAppointment({ ...newAppointment, patient_id: '' });
                     }}
                     className={`px-3 py-1.5 text-sm rounded-lg ${
                       showNewPatientForm ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
@@ -717,7 +1101,7 @@ export default function AppointmentsPage() {
                       />
                       <span className="absolute left-3 top-2.5">🔍</span>
                     </div>
-                    
+
                     {showPatientSearch && patientSearchTerm && (
                       <div className="mt-1 border rounded-lg max-h-40 overflow-y-auto">
                         {filteredPatients.length > 0 ? (
@@ -727,7 +1111,7 @@ export default function AppointmentsPage() {
                               type="button"
                               onClick={() => {
                                 setSelectedPatient(patient);
-                                setNewAppointment({...newAppointment, patient_id: patient.id});
+                                setNewAppointment({ ...newAppointment, patient_id: patient.id });
                                 setPatientSearchTerm(patient.full_name);
                                 setShowPatientSearch(false);
                               }}
@@ -744,7 +1128,7 @@ export default function AppointmentsPage() {
                           ))
                         ) : (
                           <div className="px-3 py-2 text-sm text-gray-500">
-                            No patients found. Click "New Patient" to create one.
+                            No patients found. Click &quot;New Patient&quot; to create one.
                           </div>
                         )}
                       </div>
@@ -765,33 +1149,33 @@ export default function AppointmentsPage() {
                       type="text"
                       placeholder="Full Name *"
                       value={newPatient.full_name}
-                      onChange={(e) => setNewPatient({...newPatient, full_name: e.target.value})}
+                      onChange={(e) => setNewPatient({ ...newPatient, full_name: e.target.value })}
                       className="border rounded px-3 py-2"
                     />
                     <input
                       type="text"
                       placeholder="Phone *"
                       value={newPatient.phone}
-                      onChange={(e) => setNewPatient({...newPatient, phone: e.target.value})}
+                      onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
                       className="border rounded px-3 py-2"
                     />
                     <input
                       type="email"
                       placeholder="Email"
                       value={newPatient.email}
-                      onChange={(e) => setNewPatient({...newPatient, email: e.target.value})}
+                      onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
                       className="border rounded px-3 py-2"
                     />
                     <input
                       type="date"
                       placeholder="Date of Birth"
                       value={newPatient.date_of_birth}
-                      onChange={(e) => setNewPatient({...newPatient, date_of_birth: e.target.value})}
+                      onChange={(e) => setNewPatient({ ...newPatient, date_of_birth: e.target.value })}
                       className="border rounded px-3 py-2"
                     />
                     <select
                       value={newPatient.gender}
-                      onChange={(e) => setNewPatient({...newPatient, gender: e.target.value})}
+                      onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
                       className="border rounded px-3 py-2"
                     >
                       <option value="">Gender</option>
@@ -803,28 +1187,28 @@ export default function AppointmentsPage() {
                       type="text"
                       placeholder="Blood Group"
                       value={newPatient.blood_group}
-                      onChange={(e) => setNewPatient({...newPatient, blood_group: e.target.value})}
+                      onChange={(e) => setNewPatient({ ...newPatient, blood_group: e.target.value })}
                       className="border rounded px-3 py-2"
                     />
                     <input
                       type="text"
                       placeholder="Address"
                       value={newPatient.address}
-                      onChange={(e) => setNewPatient({...newPatient, address: e.target.value})}
+                      onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
                       className="border rounded px-3 py-2 col-span-2"
                     />
                     <input
                       type="text"
                       placeholder="City"
                       value={newPatient.city}
-                      onChange={(e) => setNewPatient({...newPatient, city: e.target.value})}
+                      onChange={(e) => setNewPatient({ ...newPatient, city: e.target.value })}
                       className="border rounded px-3 py-2"
                     />
                     <input
                       type="text"
                       placeholder="State"
                       value={newPatient.state}
-                      onChange={(e) => setNewPatient({...newPatient, state: e.target.value})}
+                      onChange={(e) => setNewPatient({ ...newPatient, state: e.target.value })}
                       className="border rounded px-3 py-2"
                     />
                     <button
@@ -845,7 +1229,7 @@ export default function AppointmentsPage() {
                   <input
                     type="date"
                     value={newAppointment.appointment_date}
-                    onChange={(e) => setNewAppointment({...newAppointment, appointment_date: e.target.value})}
+                    onChange={(e) => setNewAppointment({ ...newAppointment, appointment_date: e.target.value })}
                     className="w-full border rounded px-3 py-2"
                   />
                 </div>
@@ -854,7 +1238,7 @@ export default function AppointmentsPage() {
                   <input
                     type="time"
                     value={newAppointment.appointment_time}
-                    onChange={(e) => setNewAppointment({...newAppointment, appointment_time: e.target.value})}
+                    onChange={(e) => setNewAppointment({ ...newAppointment, appointment_time: e.target.value })}
                     className="w-full border rounded px-3 py-2"
                   />
                 </div>
@@ -869,7 +1253,7 @@ export default function AppointmentsPage() {
                       const type = e.target.value;
                       const selectedDoctor = doctors.find(d => d.id === newAppointment.doctor_id);
                       let fee = 0;
-                      
+
                       if (selectedDoctor) {
                         if (type === 'follow_up') {
                           fee = selectedDoctor.follow_up_fee || selectedDoctor.consultation_fee || 0;
@@ -877,7 +1261,7 @@ export default function AppointmentsPage() {
                           fee = selectedDoctor.consultation_fee || 0;
                         }
                       }
-                      
+
                       setNewAppointment({
                         ...newAppointment,
                         appointment_type: type,
@@ -896,7 +1280,6 @@ export default function AppointmentsPage() {
                   <input
                     type="number"
                     value={newAppointment.payment_amount}
-                    onChange={(e) => setNewAppointment({...newAppointment, payment_amount: parseFloat(e.target.value)})}
                     className="w-full border rounded px-3 py-2 bg-gray-50"
                     readOnly
                   />
@@ -907,7 +1290,7 @@ export default function AppointmentsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
                 <select
                   value={newAppointment.payment_method}
-                  onChange={(e) => setNewAppointment({...newAppointment, payment_method: e.target.value})}
+                  onChange={(e) => setNewAppointment({ ...newAppointment, payment_method: e.target.value })}
                   className="w-full border rounded px-3 py-2"
                 >
                   <option value="cash">Cash</option>
@@ -922,7 +1305,7 @@ export default function AppointmentsPage() {
                 <textarea
                   placeholder="Symptoms"
                   value={newAppointment.symptoms}
-                  onChange={(e) => setNewAppointment({...newAppointment, symptoms: e.target.value})}
+                  onChange={(e) => setNewAppointment({ ...newAppointment, symptoms: e.target.value })}
                   className="w-full border rounded px-3 py-2"
                   rows={3}
                 />
@@ -954,15 +1337,17 @@ export default function AppointmentsPage() {
 
       {/* Details Modal */}
       {showDetailsModal && selectedAppointment && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           onClick={() => setShowDetailsModal(false)}
         >
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-          
-          <div 
+
+          <div
             className="relative bg-white rounded-lg p-6 w-full max-w-lg shadow-xl"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
           >
             <h2 className="text-xl font-bold mb-4">Appointment Details</h2>
             <div className="space-y-3">

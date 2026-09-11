@@ -107,6 +107,7 @@ export default function DashboardLayout({
     { name: 'Schedules', href: '/dashboard/schedules', icon: Clock },
     { name: 'Slots', href: '/dashboard/slots', icon: Timer },
     { name: 'Staff', href: '/dashboard/staff', icon: Briefcase },
+    { name: 'Blogs', href: '/dashboard/blogs', icon: HeartPulse },
   ] : currentUser.role === 'doctor' ? [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'My Appointments', href: '/dashboard/appointments', icon: Calendar },

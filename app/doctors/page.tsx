@@ -235,7 +235,7 @@ function DoctorCard({ doctor, onBookAppointment }: { doctor: Doctor; onBookAppoi
           <div className="flex items-center gap-1.5">
             <RupeeIcon />
             <div>
-              <p className="text-[15px] font-bold text-[#1a1a1a] leading-none">{doctor.fees.toLocaleString("en-IN")}</p>
+              <p className="text-[15px] font-bold text-[#1a1a1a] leading-none">₹{doctor.fees.toLocaleString("en-IN")}</p>
               <p className="text-[11px] text-gray-500 mt-0.5">Fees</p>
             </div>
           </div>
@@ -267,7 +267,7 @@ const doctorFaqItems = [
   {
     id: "find",
     label: "How do I find the right doctor?",
-    content: "Use the search bar and specialty filters at the top of this page to browse doctors by name or speciality. Each doctor card shows their experience, consultation fees, and hospital. Click 'View Full Profile' for a detailed bio, education, and awards.",
+    content: "Use the search bar and specialty filters at the top of this page to browse doctors by name or speciality. Each doctor card shows their experience, consultation fees (in ₹), and hospital. Click 'View Full Profile' for a detailed bio, education, and awards.",
   },
   {
     id: "appointment",
@@ -277,7 +277,7 @@ const doctorFaqItems = [
   {
     id: "fees",
     label: "Are consultation fees displayed accurate?",
-    content: "The fees shown are indicative consultation charges. Actual charges may vary based on the type of consultation, investigations required, and the hospital facility. Final billing will be confirmed at the time of booking.",
+    content: "The fees shown in ₹ are indicative consultation charges. Actual charges may vary based on the type of consultation, investigations required, and the hospital facility. Final billing will be confirmed at the time of booking.",
   },
   {
     id: "video",

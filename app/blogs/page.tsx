@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase-client";
 
 // ── Shared TopBar ─────────────────────────────────────────────────────────────
 
@@ -37,25 +38,18 @@ const navItems = ["Doctors", "Services", "Blogs", "About Us", "Contact Us"];
 function MainNav() {
   const getNavLink = (item: string): string => {
     switch (item) {
-      case "Doctors":
-        return "/doctors";
-      case "Services":
-        return "/services";
-      case "Blogs":
-        return "/blogs";
-      case "About Us":
-        return "/about";
-      case "Contact Us":
-        return "#contact";
-      default:
-        return "#";
+      case "Doctors": return "/doctors";
+      case "Services": return "/services";
+      case "Blogs": return "/blogs";
+      case "About Us": return "/about";
+      case "Contact Us": return "#contact";
+      default: return "#";
     }
   };
 
   return (
     <header className="w-full bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-[1200px] mx-auto px-4 flex items-center justify-between h-16">
-        {/* Logo */}
         <a href="/" className="flex items-center gap-2 flex-shrink-0">
           <img
             src="https://res.cloudinary.com/df01whs60/image/upload/v1785656956/Sant_haridas_hospital_logo_page-0001_vu9ssi.jpg"
@@ -63,8 +57,6 @@ function MainNav() {
             className="h-12 w-auto object-contain"
           />
         </a>
-
-        {/* Nav links */}
         <nav className="hidden lg:flex items-center gap-6">
           {navItems.map((item) => (
             <a key={item} href={getNavLink(item)} className="text-[14px] font-medium text-gray-700 hover:text-[#1a9fa8] transition-colors">
@@ -72,8 +64,6 @@ function MainNav() {
             </a>
           ))}
         </nav>
-
-        {/* Right actions */}
         <div className="flex items-center gap-3">
           <a href="/doctors" className="hidden md:inline-flex items-center bg-[#e07234] hover:bg-[#c5602a] text-white text-[13px] font-bold px-4 py-2 rounded transition-colors whitespace-nowrap">
             Book an Appointment
@@ -84,10 +74,37 @@ function MainNav() {
   );
 }
 
-// ── Blog data ─────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type BlogRow = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  category: string | null;
+  specialty: string | null;
+  tags: string[] | null;
+  author_name: string | null;
+  author_role: string | null;
+  featured_image: string | null;
+  featured_image_alt: string | null;
+  reading_time: number | null;
+  status: "draft" | "published" | "archived";
+  published_at: string | null;
+  is_featured: boolean;
+  display_order: number | null;
+  views: number;
+  created_at: string;
+  updated_at: string;
+  // Optional (add via ALTER TABLE, see notes)
+  banner_title?: string | null;
+  banner_subtitle?: string | null;
+};
 
 type BlogPost = {
-  id: number;
+  id: string;
+  slug: string;
   bannerTitle: string;
   bannerSubtitle: string;
   image: string;
@@ -100,208 +117,159 @@ type BlogPost = {
   readTime: string;
 };
 
-const blogPosts: BlogPost[] = [
-  {
-    id: 1,
-    bannerTitle: "WORLD LUNG\nCANCER DAY",
-    bannerSubtitle: "United for Awareness,\nPrevention and Early\nDetection",
-    image: "/blog-lung-cancer.png",
-    imageAlt: "White ribbon awareness for lung cancer",
-    title: "World Lung Cancer Day 2026: United for Awareness, Prevention and Early Detection",
-    excerpt: "Lung cancer is one of the most widespread and deadliest types of cancer, responsible for nearly one in five cancer-related deaths worldwide. Early detection remains the most powerful tool in improving survival rates.",
-    author: "Dr. Kamran Ali",
-    authorSpecialty: "Lung Transplant Thoracic Surgery",
-    date: "Jul 31, 2026",
-    readTime: "12 min read",
-  },
-  {
-    id: 2,
-    bannerTitle: "WORLD\nBREASTFEEDING\nWEEK",
-    bannerSubtitle: "Supporting Healthy\nBeginnings for All",
-    image: "/blog-breastfeeding.png",
-    imageAlt: "Mother breastfeeding newborn baby",
-    title: "World Breastfeeding Week 2026: Supporting Healthy Beginnings for All",
-    excerpt: "Despite being one of the most natural and beneficial acts for both mother and child, breastfeeding is often surrounded by myths, challenges, and societal pressures that can make it difficult for new mothers.",
-    author: "Dr. Anuradha Kapur",
-    authorSpecialty: "Obstetrics And Gynaecology",
-    date: "Jul 31, 2026",
-    readTime: "11 min read",
-  },
-  {
-    id: 3,
-    bannerTitle: "WATER BORNE\nDISEASES",
-    bannerSubtitle: "List, Risks, and\nPrevention",
-    image: "/blog-waterborne.png",
-    imageAlt: "Microscopic view of waterborne pathogens",
-    title: "Water Borne Diseases — List, Risks, and Prevention",
-    excerpt: "Do you know why the intake of purified water is emphasized so much? It is because contaminated water is a silent carrier of numerous dangerous pathogens that can cause severe illness and even death.",
-    author: "Dr. Priya Mehta",
-    authorSpecialty: "Internal Medicine",
-    date: "Jul 28, 2026",
-    readTime: "9 min read",
-  },
-  {
-    id: 4,
-    bannerTitle: "PREGNANCY\nWEEKS 1 TO 5",
-    bannerSubtitle: "A Guide for\nMoms-to-Be",
-    image: "/blog-pregnancy.png",
-    imageAlt: "Pregnant woman holding her belly",
-    title: "Pregnancy Weeks 1 to 5: A Guide for Moms-to-Be",
-    excerpt: "Even before a pregnancy is confirmed, significant changes are already taking place in a woman's body. Understanding what happens in the first five weeks can help expectant mothers prepare both physically and emotionally.",
-    author: "Dr. Sunita Gupta",
-    authorSpecialty: "Obstetrics And Gynaecology",
-    date: "Jul 25, 2026",
-    readTime: "8 min read",
-  },
-  {
-    id: 5,
-    bannerTitle: "HEART HEALTH\nAWARENESS",
-    bannerSubtitle: "Prevention, Diagnosis\nand Care",
-    image: "/about-hero-1.png",
-    imageAlt: "Doctor checking heart health",
-    title: "Heart Health Awareness: Prevention, Diagnosis and Advanced Cardiac Care",
-    excerpt: "Cardiovascular disease continues to be the leading cause of mortality globally. With evolving risk factors and modern lifestyles, understanding heart health has never been more critical for every age group.",
-    author: "Dr. Ramesh Nair",
-    authorSpecialty: "Cardiac Sciences",
-    date: "Jul 20, 2026",
-    readTime: "10 min read",
-  },
-  {
-    id: 6,
-    bannerTitle: "DIABETES &\nLIFESTYLE",
-    bannerSubtitle: "Managing Sugar with\nSmart Habits",
-    image: "/about-hero-2.png",
-    imageAlt: "Doctor using digital health tools",
-    title: "Diabetes and Lifestyle: Managing Blood Sugar with Smart Daily Habits",
-    excerpt: "Type 2 diabetes is increasingly prevalent, but with the right dietary choices, physical activity, and medical guidance, it is a highly manageable condition. Learn how small changes can yield significant health benefits.",
-    author: "Dr. Meena Sharma",
-    authorSpecialty: "Internal Medicine",
-    date: "Jul 15, 2026",
-    readTime: "7 min read",
-  },
-];
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-// ── Specialities list ─────────────────────────────────────────────────────────
+const PAGE_SIZE = 6;
+const FALLBACK_IMAGE =
+  "https://res.cloudinary.com/df01whs60/image/upload/v1785656956/Sant_haridas_hospital_logo_page-0001_vu9ssi.jpg";
 
-const specialities = [
-  "Aesthetic And Reconstructive Surgery",
-  "Allergy",
-  "Anaesthesia",
-  "Arthroscopic Surgery",
-  "Arthroscopy & Sports Injury",
-  "Audiology",
-  "Ayurveda Medicine",
-  "Bariatric Surgery / Metabolic",
-  "Bone Marrow Transplant",
-  "Breast Cancer",
-  "Cancer Care / Oncology",
-  "Cardiac Anesthesia",
-  "Cardiac Electrophysiology-Pacemaker",
-  "Cardiac Sciences",
-  "Cardiac Surgery",
-  "Cardiac Surgery (CTVS)",
-  "Cardiology",
-  "Child Development Clinic",
-  "Clinical Psychology",
-  "Critical Care",
-  "Dental Sciences",
-  "Dermatology",
-  "Diabetology",
-  "ENT",
-  "Gastroenterology",
-  "General Surgery",
-  "Gynaecology Oncology",
-  "Haematology",
-  "Internal Medicine",
-  "Liver Transplant",
-  "Nephrology",
-  "Neurology",
-  "Neurosciences",
-  "Neurosurgery",
-  "Obstetrics",
-  "Oncology",
-  "Ophthalmology",
-  "Orthopaedics",
-  "Physiotherapy",
-  "Psychiatry",
-  "Pulmonology",
-  "Radiology",
-  "Rheumatology",
-  "Robotic Surgery",
-  "Urology",
-];
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const languages = [
-  "English", "Hindi", "Bengali", "Tamil", "Telugu",
-  "Marathi", "Gujarati", "Kannada", "Malayalam", "Punjabi",
-];
+function formatDate(iso: string | null): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
 
-// ── Blog Card Component ───────────────────────────────────────────────────────
+function mapRowToPost(row: BlogRow): BlogPost {
+  const bannerTitle =
+    (row.banner_title && row.banner_title.trim()) || row.title;
+  const bannerSubtitle =
+    (row.banner_subtitle && row.banner_subtitle.trim()) || row.excerpt || "";
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    bannerTitle,
+    bannerSubtitle,
+    image: row.featured_image || FALLBACK_IMAGE,
+    imageAlt: row.featured_image_alt || row.title,
+    title: row.title,
+    excerpt: row.excerpt || "",
+    author: row.author_name || "Sant Haridas Hospital",
+    authorSpecialty: row.author_role || row.specialty || "",
+    date: formatDate(row.published_at ?? row.created_at),
+    readTime: row.reading_time ? `${row.reading_time} min read` : "",
+  };
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+function BlogSkeleton() {
+  return (
+    <article className="flex flex-col animate-pulse">
+      <div className="rounded-xl bg-gray-200" style={{ height: 210 }} />
+      <div className="mt-4 flex flex-col gap-3">
+        <div className="h-4 bg-gray-200 rounded w-11/12" />
+        <div className="h-4 bg-gray-200 rounded w-8/12" />
+        <div className="h-3 bg-gray-200 rounded w-full" />
+        <div className="h-3 bg-gray-200 rounded w-10/12" />
+      </div>
+    </article>
+  );
+}
+
+// ── Blog Card ─────────────────────────────────────────────────────────────────
 
 function BlogCard({ post }: { post: BlogPost }) {
   return (
     <article className="flex flex-col group">
-      {/* Banner */}
-      <div className="relative rounded-xl overflow-hidden bg-[#d6eef2]" style={{ height: 210 }}>
-        {/* Left text */}
-        <div className="absolute inset-0 z-10 flex flex-col justify-center pl-5 pr-[46%]">
-          <p className="text-[#1a3a5c] font-bold text-[14px] leading-tight whitespace-pre-line mb-3">
-            {post.bannerTitle}
-          </p>
-          <div className="w-8 h-[3px] bg-[#1a9fa8] mb-3" />
-          <p className="text-[#1a3a5c] text-[11px] leading-snug whitespace-pre-line">
-            {post.bannerSubtitle}
-          </p>
-        </div>
-        {/* Wave cutout */}
-        <div className="absolute inset-y-0 right-0 z-10" style={{ width: "52%" }}>
-          <svg viewBox="0 0 120 200" preserveAspectRatio="none" className="absolute left-0 top-0 h-full w-8" xmlns="http://www.w3.org/2000/svg">
-            <path d="M120 0 C60 50, 60 150, 120 200 L0 200 L0 0 Z" fill="#d6eef2" />
+      <a href={`/blogs/${post.slug}`} className="block">
+        {/* Banner */}
+        <div className="relative rounded-xl overflow-hidden bg-[#d6eef2]" style={{ height: 210 }}>
+          {/* Left text */}
+          <div className="absolute inset-0 z-10 flex flex-col justify-center pl-5 pr-[46%]">
+            <p className="text-[#1a3a5c] font-bold text-[14px] leading-tight whitespace-pre-line mb-3 line-clamp-3">
+              {post.bannerTitle}
+            </p>
+            <div className="w-8 h-[3px] bg-[#1a9fa8] mb-3" />
+            <p className="text-[#1a3a5c] text-[11px] leading-snug whitespace-pre-line line-clamp-3">
+              {post.bannerSubtitle}
+            </p>
+          </div>
+
+          {/* Wave cutout */}
+          <div className="absolute inset-y-0 right-0 z-10" style={{ width: "52%" }}>
+            <svg viewBox="0 0 120 200" preserveAspectRatio="none" className="absolute left-0 top-0 h-full w-8" xmlns="http://www.w3.org/2000/svg">
+              <path d="M120 0 C60 50, 60 150, 120 200 L0 200 L0 0 Z" fill="#d6eef2" />
+            </svg>
+          </div>
+
+          {/* Photo */}
+          <div className="absolute right-0 top-0 bottom-0 z-0" style={{ width: "52%" }}>
+            <Image
+              src={post.image}
+              alt={post.imageAlt}
+              fill
+              sizes="(max-width: 768px) 50vw, 300px"
+              className="object-cover object-center"
+              unoptimized
+            />
+            <div className="absolute inset-0 bg-[#1a9fa8]/10" />
+          </div>
+
+          {/* Teal arc corner */}
+          <svg className="absolute top-0 right-0 z-20" width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M56 0 Q56 56 0 56" stroke="#1a9fa8" strokeWidth="3" fill="none" />
           </svg>
         </div>
-        {/* Photo */}
-        <div className="absolute right-0 top-0 bottom-0 z-0" style={{ width: "52%" }}>
-          <Image src={post.image} alt={post.imageAlt} fill className="object-cover object-center" />
-          <div className="absolute inset-0 bg-[#1a9fa8]/10" />
-        </div>
-        {/* Teal arc corner */}
-        <svg className="absolute top-0 right-0 z-20" width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M56 0 Q56 56 0 56" stroke="#1a9fa8" strokeWidth="3" fill="none" />
-        </svg>
-      </div>
 
-      {/* Content below banner */}
-      <div className="mt-4 flex flex-col gap-2.5 flex-1">
-        <h2 className="text-[15px] font-bold text-[#1a3a5c] leading-snug group-hover:text-[#1a9fa8] transition-colors line-clamp-2 cursor-pointer">
-          {post.title}
-        </h2>
-        <p className="text-[13px] text-gray-600 leading-relaxed line-clamp-2">
-          {post.excerpt}
-        </p>
-        <div className="flex flex-col gap-0.5">
-          <p className="text-[12px] text-[#1a9fa8] font-medium cursor-pointer hover:underline">
-            {post.author} In {post.authorSpecialty}
+        {/* Content below banner */}
+        <div className="mt-4 flex flex-col gap-2.5 flex-1">
+          <h2 className="text-[15px] font-bold text-[#1a3a5c] leading-snug group-hover:text-[#1a9fa8] transition-colors line-clamp-2 cursor-pointer">
+            {post.title}
+          </h2>
+          <p className="text-[13px] text-gray-600 leading-relaxed line-clamp-2">
+            {post.excerpt}
           </p>
-          <div className="flex items-center gap-2 text-[12px] text-gray-500">
-            <span>{post.date}</span>
-            <span className="text-gray-300">|</span>
-            <span>{post.readTime}</span>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-[12px] text-[#1a9fa8] font-medium cursor-pointer hover:underline">
+              {post.author} {post.authorSpecialty ? `In ${post.authorSpecialty}` : ""}
+            </p>
+            <div className="flex items-center gap-2 text-[12px] text-gray-500">
+              <span>{post.date}</span>
+              {post.readTime && (
+                <>
+                  <span className="text-gray-300">|</span>
+                  <span>{post.readTime}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </a>
     </article>
   );
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
-function Sidebar({ selectedSpeciality, onSelect }: { selectedSpeciality: string | null; onSelect: (s: string | null) => void }) {
+function Sidebar({
+  specialities,
+  selectedSpeciality,
+  onSelect,
+}: {
+  specialities: string[];
+  selectedSpeciality: string | null;
+  onSelect: (s: string | null) => void;
+}) {
   const [langOpen, setLangOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState("English");
 
+  const languages = [
+    "English", "Hindi", "Bengali", "Tamil", "Telugu",
+    "Marathi", "Gujarati", "Kannada", "Malayalam", "Punjabi",
+  ];
+
   return (
     <aside className="w-full lg:w-[260px] flex-shrink-0 flex flex-col gap-6">
-
       {/* Language selector */}
       <div className="relative">
         <button
@@ -334,26 +302,29 @@ function Sidebar({ selectedSpeciality, onSelect }: { selectedSpeciality: string 
       {/* By Specialities */}
       <div>
         <h3 className="text-[17px] font-bold text-[#1a3a5c] mb-4">By Specialities</h3>
-        <div className="flex flex-wrap gap-2">
-          {specialities.map((s) => {
-            const active = selectedSpeciality === s;
-            return (
-              <button
-                key={s}
-                onClick={() => onSelect(active ? null : s)}
-                className={`px-3 py-1.5 rounded-full border text-[12px] font-medium transition-colors ${
-                  active
-                    ? "bg-[#1a9fa8] border-[#1a9fa8] text-white"
-                    : "border-[#1a9fa8] text-[#1a7a90] hover:bg-[#f0faf9]"
-                }`}
-              >
-                {s}
-              </button>
-            );
-          })}
-        </div>
+        {specialities.length === 0 ? (
+          <p className="text-[13px] text-gray-400">No specialities available.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {specialities.map((s) => {
+              const active = selectedSpeciality === s;
+              return (
+                <button
+                  key={s}
+                  onClick={() => onSelect(active ? null : s)}
+                  className={`px-3 py-1.5 rounded-full border text-[12px] font-medium transition-colors ${
+                    active
+                      ? "bg-[#1a9fa8] border-[#1a9fa8] text-white"
+                      : "border-[#1a9fa8] text-[#1a7a90] hover:bg-[#f0faf9]"
+                  }`}
+                >
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
-
     </aside>
   );
 }
@@ -433,7 +404,9 @@ function BlogsFooter() {
               </a>
             ))}
           </div>
-          <p className="text-[12px] text-gray-500">            &copy; {new Date().getFullYear()} Sant Haridas Hospital. All Rights Reserved.</p>
+          <p className="text-[12px] text-gray-500">
+            &copy; {new Date().getFullYear()} Sant Haridas Hospital. All Rights Reserved.
+          </p>
         </div>
         <div className="flex flex-col items-end gap-1.5 text-right">
           <p className="text-[12px] font-semibold text-[#1a3a5c]">24/7 Emergency</p>
@@ -452,16 +425,135 @@ function BlogsFooter() {
 export default function BlogsPage() {
   const [selectedSpeciality, setSelectedSpeciality] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  const filtered = blogPosts.filter((p) => {
-    const matchSearch = searchQuery === "" ||
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.author.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchSpeciality = selectedSpeciality === null ||
-      p.authorSpecialty.toLowerCase().includes(selectedSpeciality.toLowerCase()) ||
-      p.title.toLowerCase().includes(selectedSpeciality.toLowerCase());
-    return matchSearch && matchSpeciality;
-  });
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [specialities, setSpecialities] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 350);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  // Fetch specialities once (distinct values from published blogs)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("blogs")
+        .select("specialty")
+        .eq("status", "published")
+        .not("specialty", "is", null);
+
+      if (cancelled) return;
+      if (error) return; // silent, chips just won't show
+
+      const unique = Array.from(
+        new Set((data as { specialty: string | null }[]).map((r) => r.specialty).filter(Boolean) as string[])
+      ).sort((a, b) => a.localeCompare(b));
+
+      setSpecialities(unique);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch blogs (initial + on filter/search change + pagination)
+  const fetchBlogs = useCallback(
+    async (opts: { page: number; append: boolean }) => {
+      const { page: pageNum, append } = opts;
+
+      if (append) setLoadingMore(true);
+      else setLoading(true);
+      setError(null);
+
+      const from = (pageNum - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      let query = supabase
+        .from("blogs")
+        .select(
+          "id,title,slug,excerpt,content,category,specialty,tags,author_name,author_role,featured_image,featured_image_alt,reading_time,status,published_at,is_featured,display_order,views,created_at,updated_at,banner_title,banner_subtitle",
+          { count: "exact" }
+        )
+        .eq("status", "published")
+        .order("is_featured", { ascending: false })
+        .order("published_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (selectedSpeciality) {
+        query = query.eq("specialty", selectedSpeciality);
+      }
+
+      if (debouncedQuery) {
+        // Case-insensitive match across title, excerpt, author_name, tags
+        const q = debouncedQuery.replace(/[%,]/g, "");
+        query = query.or(
+          `title.ilike.%${q}%,excerpt.ilike.%${q}%,author_name.ilike.%${q}%,author_role.ilike.%${q}%`
+        );
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        // Fallback: retry without banner_* columns in case they don't exist
+        const { data: fallbackData, error: fallbackErr, count: fallbackCount } = await supabase
+          .from("blogs")
+          .select(
+            "id,title,slug,excerpt,content,category,specialty,tags,author_name,author_role,featured_image,featured_image_alt,reading_time,status,published_at,is_featured,display_order,views,created_at,updated_at",
+            { count: "exact" }
+          )
+          .eq("status", "published")
+          .order("is_featured", { ascending: false })
+          .order("published_at", { ascending: false, nullsFirst: false })
+          .order("created_at", { ascending: false })
+          .range(from, to);
+
+        if (fallbackErr) {
+          setError(fallbackErr.message);
+          if (!append) setPosts([]);
+          if (append) setLoadingMore(false); else setLoading(false);
+          return;
+        }
+
+        const mapped = ((fallbackData ?? []) as unknown as BlogRow[]).map(mapRowToPost);
+        setPosts((prev) => (append ? [...prev, ...mapped] : mapped));
+        setTotalCount(fallbackCount ?? mapped.length);
+        if (append) setLoadingMore(false); else setLoading(false);
+        return;
+      }
+
+      const mapped = ((data ?? []) as unknown as BlogRow[]).map(mapRowToPost);
+      setPosts((prev) => (append ? [...prev, ...mapped] : mapped));
+      setTotalCount(count ?? mapped.length);
+      if (append) setLoadingMore(false); else setLoading(false);
+    },
+    [selectedSpeciality, debouncedQuery]
+  );
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setPage(1);
+    fetchBlogs({ page: 1, append: false });
+  }, [fetchBlogs]);
+
+  const canLoadMore = useMemo(
+    () => posts.length < totalCount && !loading && !loadingMore,
+    [posts.length, totalCount, loading, loadingMore]
+  );
+
+  const handleLoadMore = () => {
+    const next = page + 1;
+    setPage(next);
+    fetchBlogs({ page: next, append: true });
+  };
 
   return (
     <>
@@ -474,7 +566,9 @@ export default function BlogsPage() {
           {/* Page header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#1a3a5c] mb-1">Health Blogs</h1>
-            <p className="text-[14px] text-gray-500">Expert insights, health tips and the latest medical news from Sant Haridas Hospital specialists.</p>
+            <p className="text-[14px] text-gray-500">
+              Expert insights, health tips and the latest medical news from Sant Haridas Hospital specialists.
+            </p>
           </div>
 
           {/* Search bar */}
@@ -514,7 +608,7 @@ export default function BlogsPage() {
             </div>
           )}
 
-          {/* Main layout: articles + sidebar */}
+          {/* Main layout */}
           <div className="flex flex-col lg:flex-row gap-10 items-start">
 
             {/* Articles grid */}
@@ -523,7 +617,23 @@ export default function BlogsPage() {
                 Recent Articles
               </h2>
 
-              {filtered.length === 0 ? (
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                    <BlogSkeleton key={i} />
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="py-20 text-center">
+                  <p className="text-red-500 text-[15px] mb-3">Failed to load blogs: {error}</p>
+                  <button
+                    onClick={() => fetchBlogs({ page: 1, append: false })}
+                    className="text-[#1a9fa8] text-[14px] font-medium hover:underline"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : posts.length === 0 ? (
                 <div className="py-20 text-center">
                   <p className="text-gray-400 text-[15px]">No articles found for your search.</p>
                   <button
@@ -535,24 +645,32 @@ export default function BlogsPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                  {filtered.map((post) => (
+                  {posts.map((post) => (
                     <BlogCard key={post.id} post={post} />
                   ))}
                 </div>
               )}
 
               {/* Load more */}
-              {filtered.length > 0 && (
+              {!loading && !error && posts.length > 0 && canLoadMore && (
                 <div className="mt-10 flex justify-center">
-                  <button className="px-8 py-3 border-2 border-[#1a9fa8] text-[#1a9fa8] text-[14px] font-semibold rounded-lg hover:bg-[#f0faf9] transition-colors">
-                    Load More Articles
+                  <button
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="px-8 py-3 border-2 border-[#1a9fa8] text-[#1a9fa8] text-[14px] font-semibold rounded-lg hover:bg-[#f0faf9] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {loadingMore ? "Loading..." : "Load More Articles"}
                   </button>
                 </div>
               )}
             </div>
 
             {/* Sidebar */}
-            <Sidebar selectedSpeciality={selectedSpeciality} onSelect={setSelectedSpeciality} />
+            <Sidebar
+              specialities={specialities}
+              selectedSpeciality={selectedSpeciality}
+              onSelect={setSelectedSpeciality}
+            />
           </div>
 
         </div>

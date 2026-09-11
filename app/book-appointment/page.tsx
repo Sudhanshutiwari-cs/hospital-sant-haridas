@@ -111,7 +111,7 @@ function TopBar() {
 
 function MainNav() {
   const mainNavItems = ["Doctors", "Services", "Blogs", "About Us", "Contact Us"];
-  
+
   const getNavLink = (item: string): string => {
     switch (item) {
       case "Doctors": return "/doctors";
@@ -177,7 +177,7 @@ type TimeSlot = {
 
 export default function BookAppointmentPage() {
   const router = useRouter();
-  
+
   // State management
   const [currentStep, setCurrentStep] = useState(1);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -212,7 +212,7 @@ export default function BookAppointmentPage() {
   useEffect(() => {
     const selectedDoctorData = sessionStorage.getItem('selectedDoctor');
     const bookingData = sessionStorage.getItem('bookingData');
-    
+
     if (selectedDoctorData) {
       try {
         const doctor = JSON.parse(selectedDoctorData);
@@ -224,7 +224,7 @@ export default function BookAppointmentPage() {
         console.error('Error parsing selected doctor:', err);
       }
     }
-    
+
     if (bookingData) {
       try {
         const booking = JSON.parse(bookingData);
@@ -258,14 +258,14 @@ export default function BookAppointmentPage() {
           }
         }
       }
-      
+
       if (!selectedDate) {
         const savedDate = sessionStorage.getItem('selectedDate');
         if (savedDate) {
           setSelectedDate(savedDate);
         }
       }
-      
+
       if (!selectedDoctor) {
         const savedDoctor = sessionStorage.getItem('selectedDoctorBackup');
         if (savedDoctor) {
@@ -295,7 +295,7 @@ export default function BookAppointmentPage() {
   const fetchDoctors = async () => {
     setIsLoadingDoctors(true);
     setError('');
-    
+
     try {
       let query = supabase
         .from('doctors')
@@ -336,10 +336,10 @@ export default function BookAppointmentPage() {
 
   const fetchAvailableSlots = async () => {
     if (!selectedDoctor || !selectedDate) return;
-    
+
     setIsLoading(true);
     setError('');
-    
+
     try {
       const { data: slots, error: slotsError } = await supabase
         .from('doctor_slots')
@@ -368,15 +368,15 @@ export default function BookAppointmentPage() {
     const days: { date: string; dayName: string; dayNumber: number; month: string; isPast: boolean }[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const year = monthDate.getFullYear();
     const month = monthDate.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
+
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(year, month, i);
       date.setHours(0, 0, 0, 0);
-      
+
       days.push({
         date: date.toISOString().split('T')[0],
         dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -385,7 +385,7 @@ export default function BookAppointmentPage() {
         isPast: date < today,
       });
     }
-    
+
     return days;
   };
 
@@ -435,7 +435,7 @@ export default function BookAppointmentPage() {
     sessionStorage.setItem('selectedDate', date);
     setSelectedSlot(null);
     sessionStorage.removeItem('selectedSlot');
-    
+
     const selectedDateObj = new Date(date);
     setCurrentMonth(selectedDateObj);
   };
@@ -450,7 +450,7 @@ export default function BookAppointmentPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    
+
     if (formErrors[name]) {
       const newErrors = { ...formErrors };
       delete newErrors[name];
@@ -461,11 +461,11 @@ export default function BookAppointmentPage() {
   // Validate form
   const validateForm = () => {
     const errors: Record<string, string> = {};
-    
+
     if (!formData.patient_name.trim()) {
       errors.patient_name = 'Patient name is required';
     }
-    
+
     if (!formData.patient_phone.trim()) {
       errors.patient_phone = 'Phone number is required';
     } else {
@@ -474,11 +474,11 @@ export default function BookAppointmentPage() {
         errors.patient_phone = 'Please enter a valid 10-digit phone number';
       }
     }
-    
+
     if (formData.patient_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.patient_email)) {
       errors.patient_email = 'Please enter a valid email address';
     }
-    
+
     if (formData.patient_age) {
       const age = parseInt(formData.patient_age);
       if (isNaN(age) || age < 0 || age > 150) {
@@ -493,22 +493,30 @@ export default function BookAppointmentPage() {
   // Submit booking
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    
+
     if (!selectedDoctor || !selectedSlot || !selectedDate) {
-      setError('Please complete all booking steps');
+      setError("Please complete all booking steps");
       return;
     }
 
     setIsSubmitting(true);
-    setError('');
-    
+    setError("");
+
     try {
-      let patientId = null;
-      
+      const normalizePhone = (input: string) => {
+        const digits = (input || "").replace(/\D/g, "");
+        if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
+        if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
+        return digits;
+      };
+      const phone = normalizePhone(formData.patient_phone);
+
+      let patientId: string | null = null;
+
       const { data: existingPatient, error: patientLookupError } = await supabase
-        .from('patients')
-        .select('id')
-        .eq('phone', formData.patient_phone)
+        .from("patients")
+        .select("id, user_id")
+        .eq("phone", phone)
         .limit(1);
 
       if (patientLookupError) throw patientLookupError;
@@ -518,18 +526,17 @@ export default function BookAppointmentPage() {
       } else {
         const patientData: any = {
           full_name: formData.patient_name,
-          phone: formData.patient_phone,
+          phone,
           email: formData.patient_email || null,
           gender: formData.patient_gender || null,
         };
-
         if (formData.patient_age) {
           const birthYear = new Date().getFullYear() - parseInt(formData.patient_age);
           patientData.date_of_birth = `${birthYear}-01-01`;
         }
 
         const { data: newPatient, error: patientCreateError } = await supabase
-          .from('patients')
+          .from("patients")
           .insert(patientData)
           .select()
           .single();
@@ -538,16 +545,18 @@ export default function BookAppointmentPage() {
         patientId = newPatient.id;
       }
 
+      if (!patientId) throw new Error("Could not resolve patient record");
+
       const { data: slotCheck, error: slotCheckError } = await supabase
-        .from('doctor_slots')
-        .select('is_booked, is_available')
-        .eq('id', selectedSlot.id)
+        .from("doctor_slots")
+        .select("is_booked, is_available")
+        .eq("id", selectedSlot.id)
         .single();
 
       if (slotCheckError) throw slotCheckError;
 
       if (slotCheck.is_booked || !slotCheck.is_available) {
-        setError('Selected slot is no longer available. Please choose another slot.');
+        setError("Selected slot is no longer available. Please choose another slot.");
         setIsSubmitting(false);
         return;
       }
@@ -558,16 +567,16 @@ export default function BookAppointmentPage() {
         slot_id: selectedSlot.id,
         appointment_date: selectedDate,
         appointment_time: selectedSlot.start_time,
-        appointment_type: 'consultation',
-        status: 'pending',
+        appointment_type: "consultation",
+        status: "pending",
         symptoms: formData.patient_message || null,
         notes: formData.patient_message || null,
-        payment_status: 'unpaid',
+        payment_status: "unpaid",
         payment_amount: selectedDoctor.fees,
       };
 
       const { data: appointment, error: appointmentError } = await supabase
-        .from('appointments')
+        .from("appointments")
         .insert(appointmentData)
         .select()
         .single();
@@ -575,24 +584,48 @@ export default function BookAppointmentPage() {
       if (appointmentError) throw appointmentError;
 
       const { error: slotUpdateError } = await supabase
-        .from('doctor_slots')
+        .from("doctor_slots")
         .update({ is_booked: true })
-        .eq('id', selectedSlot.id);
+        .eq("id", selectedSlot.id);
 
       if (slotUpdateError) {
-        console.error('Slot update error:', slotUpdateError);
+        console.error("Slot update error:", slotUpdateError);
+      }
+
+      // ⭐ Create the patient login account (auth user + link patient.user_id)
+      try {
+        const res = await fetch("/api/patients/ensure-account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name: formData.patient_name,
+            phone,
+            email: formData.patient_email || null,
+            gender: formData.patient_gender || null,
+            date_of_birth: formData.patient_age
+              ? `${new Date().getFullYear() - parseInt(formData.patient_age)}-01-01`
+              : null,
+          }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          console.warn("Patient account creation failed:", json?.error);
+        } else {
+          console.log("Patient account ready:", json);
+        }
+      } catch (accErr) {
+        console.warn("ensure-account network error:", accErr);
       }
 
       setBookingReference(appointment.id);
       setBookingSuccess(true);
-      
-      sessionStorage.removeItem('selectedSlot');
-      sessionStorage.removeItem('selectedDate');
-      sessionStorage.removeItem('selectedDoctorBackup');
-      
+
+      sessionStorage.removeItem("selectedSlot");
+      sessionStorage.removeItem("selectedDate");
+      sessionStorage.removeItem("selectedDoctorBackup");
     } catch (err: any) {
-      console.error('Error booking appointment:', err);
-      setError(err.message || 'Failed to book appointment. Please try again.');
+      console.error("Error booking appointment:", err);
+      setError(err.message || "Failed to book appointment. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -618,11 +651,11 @@ export default function BookAppointmentPage() {
     setFormErrors({});
     setError('');
     setSearchTerm('');
-    
+
     sessionStorage.removeItem('selectedSlot');
     sessionStorage.removeItem('selectedDate');
     sessionStorage.removeItem('selectedDoctorBackup');
-    
+
     fetchDoctors();
   };
 
@@ -699,6 +732,26 @@ export default function BookAppointmentPage() {
               <p className="text-sm text-gray-500 mb-6">
                 Booking Reference: <span className="font-mono font-semibold">{bookingReference}</span>
               </p>
+
+              {/* ⭐ Login info box (added) */}
+              <div className="bg-[#f0faf9] border border-[#cbecee] rounded-lg p-4 mb-6 text-left">
+                <p className="text-[13px] font-semibold text-[#1a3a5c] mb-1">
+                  🔐 You can now log in to track your appointment
+                </p>
+                <p className="text-[12px] text-gray-600">
+                  Use your mobile number{" "}
+                  <span className="font-semibold">{formData.patient_phone}</span> as both your
+                  login ID and password at{" "}
+                  <Link
+                    href="/patient/login"
+                    className="text-[#1a9fa8] font-semibold hover:underline"
+                  >
+                    /patient/login
+                  </Link>
+                  .
+                </p>
+              </div>
+
               <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -736,7 +789,7 @@ export default function BookAppointmentPage() {
                 {currentStep === 1 && (
                   <div className="space-y-4">
                     <h2 className="text-xl font-bold text-[#1a3a5c] mb-4">Select a Doctor</h2>
-                    
+
                     <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
                       <div className="flex items-center gap-3">
                         <SearchIcon />
@@ -748,7 +801,7 @@ export default function BookAppointmentPage() {
                           className="flex-1 text-[14px] text-gray-700 placeholder-gray-400 outline-none bg-transparent"
                         />
                         {searchTerm && (
-                          <button 
+                          <button
                             onClick={() => {
                               setSearchTerm('');
                               fetchDoctors();
@@ -855,13 +908,13 @@ export default function BookAppointmentPage() {
                           <h4 className="text-base font-semibold text-[#1a3a5c]">Select Date</h4>
                           {selectedDate && (
                             <span className="text-sm text-[#1a9fa8] font-medium">
-                              {new Date(selectedDate).toLocaleDateString('en-US', { 
+                              {new Date(selectedDate).toLocaleDateString('en-US', {
                                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
                               })}
                             </span>
                           )}
                         </div>
-                        
+
                         {/* Month Navigation */}
                         <div className="flex items-center justify-between mb-4">
                           <button
@@ -884,7 +937,7 @@ export default function BookAppointmentPage() {
                             <ChevronLeftIcon className="w-4 h-4 rotate-180" />
                           </button>
                         </div>
-                        
+
                         {/* Day Names */}
                         <div className="grid grid-cols-7 gap-1 mb-2">
                           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
@@ -893,17 +946,17 @@ export default function BookAppointmentPage() {
                             </div>
                           ))}
                         </div>
-                        
+
                         {/* Calendar Grid */}
                         <div className="grid grid-cols-7 gap-1">
                           {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() }, (_, i) => (
                             <div key={`empty-${i}`} className="py-2" />
                           ))}
-                          
+
                           {monthDays.map((day) => {
                             const isSelected = selectedDate === day.date;
                             const isToday = day.date === new Date().toISOString().split('T')[0];
-                            
+
                             return (
                               <button
                                 key={day.date}
@@ -927,7 +980,7 @@ export default function BookAppointmentPage() {
                             );
                           })}
                         </div>
-                        
+
                         {/* Legend */}
                         <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
@@ -953,7 +1006,7 @@ export default function BookAppointmentPage() {
                               </span>
                             )}
                           </div>
-                          
+
                           {isLoading ? (
                             <div className="flex items-center justify-center py-12">
                               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a9fa8]"></div>
@@ -971,7 +1024,7 @@ export default function BookAppointmentPage() {
                               {availableSlots.map((slot) => {
                                 const isSelected = selectedSlot?.id === slot.id;
                                 const timeLabel = slot.start_time.slice(0, 5);
-                                
+
                                 return (
                                   <button
                                     key={slot.id}
@@ -1008,8 +1061,8 @@ export default function BookAppointmentPage() {
                             <div>
                               <p className="text-sm font-semibold text-[#1a3a5c]">Selected Appointment</p>
                               <p className="text-sm text-gray-600 mt-1">
-                                {new Date(selectedDate).toLocaleDateString('en-US', { 
-                                  weekday: 'long', day: 'numeric', month: 'long' 
+                                {new Date(selectedDate).toLocaleDateString('en-US', {
+                                  weekday: 'long', day: 'numeric', month: 'long'
                                 })} at {selectedSlot.start_time.slice(0, 5)}
                               </p>
                             </div>
@@ -1056,9 +1109,9 @@ export default function BookAppointmentPage() {
                     >
                       <ArrowLeftIcon />
                     </button>
-                    
+
                     <h2 className="text-xl font-bold text-[#1a3a5c] mb-6">Patient Details</h2>
-                    
+
                     {selectedSlot ? (
                       <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-600">
@@ -1078,7 +1131,7 @@ export default function BookAppointmentPage() {
                         </button>
                       </div>
                     )}
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name *</label>
@@ -1096,7 +1149,7 @@ export default function BookAppointmentPage() {
                           <p className="text-red-500 text-xs mt-1">{formErrors.patient_name}</p>
                         )}
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number *</label>
                         <input
@@ -1113,7 +1166,7 @@ export default function BookAppointmentPage() {
                           <p className="text-red-500 text-xs mt-1">{formErrors.patient_phone}</p>
                         )}
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
                         <input
@@ -1130,7 +1183,7 @@ export default function BookAppointmentPage() {
                           <p className="text-red-500 text-xs mt-1">{formErrors.patient_email}</p>
                         )}
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-1">Age</label>
@@ -1162,7 +1215,7 @@ export default function BookAppointmentPage() {
                           </select>
                         </div>
                       </div>
-                      
+
                       <div className="md:col-span-2">
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Symptoms / Message</label>
                         <textarea
@@ -1175,7 +1228,7 @@ export default function BookAppointmentPage() {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="mt-6">
                       <button
                         onClick={handleSubmit}
@@ -1193,7 +1246,7 @@ export default function BookAppointmentPage() {
               <div className="space-y-4">
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <h3 className="font-bold text-[#1a3a5c] mb-4">Booking Summary</h3>
-                  
+
                   {selectedDoctor ? (
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
@@ -1217,7 +1270,7 @@ export default function BookAppointmentPage() {
                           <p className="text-xs text-gray-500">{selectedDoctor.degree} | {selectedDoctor.specialization}</p>
                         </div>
                       </div>
-                      
+
                       <div className="border-t border-gray-200 pt-3 space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Consultation Fee</span>
