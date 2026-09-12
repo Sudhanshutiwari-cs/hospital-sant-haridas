@@ -148,7 +148,6 @@ function MainNav() {
           <SiteLogo />
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
           {mainNavItems.map((item) => (
             <Link
@@ -180,7 +179,6 @@ function MainNav() {
         </div>
       </div>
 
-      {/* Mobile nav */}
       {mobileOpen && (
         <nav className="lg:hidden bg-white border-t border-gray-100 shadow-md">
           <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-2 flex flex-col">
@@ -231,12 +229,30 @@ type TimeSlot = {
   is_available: boolean;
 };
 
+// ── Date Helpers (timezone-safe) ─────────────────────────────────────────────
+
+/**
+ * Format a Date object to a local YYYY-MM-DD string.
+ * Using toISOString() would shift the date backwards by timezone offset.
+ */
+function toLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Parse a YYYY-MM-DD string as a LOCAL date (not UTC). */
+function parseLocalDate(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export default function BookAppointmentPage() {
   const router = useRouter();
 
-  // State management
   const [currentStep, setCurrentStep] = useState(1);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -253,8 +269,7 @@ export default function BookAppointmentPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentMonth, setCurrentMonth] = useState<Date>(() => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today;
+    return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
   const [formData, setFormData] = useState({
@@ -266,7 +281,7 @@ export default function BookAppointmentPage() {
     patient_message: '',
   });
 
-  // Load pre-selected doctor from session storage
+  // Load pre-selected doctor
   useEffect(() => {
     const selectedDoctorData = sessionStorage.getItem('selectedDoctor');
     const bookingData = sessionStorage.getItem('bookingData');
@@ -302,48 +317,29 @@ export default function BookAppointmentPage() {
     }
   }, []);
 
-  // Restore state when moving to step 3
   useEffect(() => {
     if (currentStep === 3) {
       if (!selectedSlot) {
         const savedSlot = sessionStorage.getItem('selectedSlot');
         if (savedSlot) {
-          try {
-            const slot = JSON.parse(savedSlot);
-            setSelectedSlot(slot);
-          } catch (err) {
-            console.error('Error parsing saved slot:', err);
-          }
+          try { setSelectedSlot(JSON.parse(savedSlot)); } catch {}
         }
       }
-
       if (!selectedDate) {
         const savedDate = sessionStorage.getItem('selectedDate');
-        if (savedDate) {
-          setSelectedDate(savedDate);
-        }
+        if (savedDate) setSelectedDate(savedDate);
       }
-
       if (!selectedDoctor) {
         const savedDoctor = sessionStorage.getItem('selectedDoctorBackup');
         if (savedDoctor) {
-          try {
-            const doctor = JSON.parse(savedDoctor);
-            setSelectedDoctor(doctor);
-          } catch (err) {
-            console.error('Error parsing saved doctor:', err);
-          }
+          try { setSelectedDoctor(JSON.parse(savedDoctor)); } catch {}
         }
       }
     }
   }, [currentStep]);
 
-  // Fetch initial data
-  useEffect(() => {
-    fetchDoctors();
-  }, []);
+  useEffect(() => { fetchDoctors(); }, []);
 
-  // Fetch available slots when doctor, date changes
   useEffect(() => {
     if (selectedDoctor && selectedDate) {
       fetchAvailableSlots();
@@ -358,7 +354,8 @@ export default function BookAppointmentPage() {
       let query = supabase
         .from('doctors')
         .select(`
-          id, full_name, email, phone, degree, specialization,
+          id, full_name, email, phone, degree,
+          specialization, speciality, specialty,
           experience_years, consultation_fee, profile_image_url, is_active, about
         `)
         .eq('is_active', true)
@@ -371,17 +368,50 @@ export default function BookAppointmentPage() {
 
       const { data, error: fetchError } = await query;
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        // Fallback: minimal columns if some don't exist
+        console.warn('Primary doctor query failed, retrying with minimal columns:', fetchError.message);
+        const fallback = await supabase
+          .from('doctors')
+          .select('id, full_name, degree, specialization, experience_years, consultation_fee, profile_image_url')
+          .eq('is_active', true)
+          .order('full_name', { ascending: true });
 
-      const transformedDoctors: Doctor[] = (data || []).map((doc: any) => ({
-        id: doc.id,
-        name: doc.full_name,
-        degree: doc.degree || 'Doctor',
-        specialization: doc.specialization || 'General',
-        experience: doc.experience_years || 0,
-        fees: doc.consultation_fee || 0,
-        image: doc.profile_image_url || '',
-      }));
+        if (fallback.error) throw fallback.error;
+
+        const transformed: Doctor[] = (fallback.data || []).map((doc: any) => ({
+          id: doc.id,
+          name: doc.full_name || 'Unknown Doctor',
+          degree: doc.degree || 'Doctor',
+          specialization: doc.specialization || 'General Physician',
+          experience: doc.experience_years || 0,
+          fees: doc.consultation_fee || 0,
+          image: doc.profile_image_url || '',
+        }));
+
+        setDoctors(transformed);
+        return;
+      }
+
+      const transformedDoctors: Doctor[] = (data || []).map((doc: any) => {
+        // Try multiple possible column names for speciality
+        const spec =
+          doc.specialization ||
+          doc.speciality ||
+          doc.specialty ||
+          (doc.degree ? String(doc.degree).split(',')[0].trim() : '') ||
+          'General Physician';
+
+        return {
+          id: doc.id,
+          name: doc.full_name || 'Unknown Doctor',
+          degree: doc.degree || 'Doctor',
+          specialization: spec,
+          experience: doc.experience_years || 0,
+          fees: doc.consultation_fee || 0,
+          image: doc.profile_image_url || '',
+        };
+      });
 
       setDoctors(transformedDoctors);
     } catch (err: any) {
@@ -421,61 +451,59 @@ export default function BookAppointmentPage() {
     }
   };
 
-  // Generate days for the selected month
-  const generateMonthDays = (monthDate: Date) => {
-    const days: { date: string; dayName: string; dayNumber: number; month: string; isPast: boolean }[] = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  // ── Calendar generation ────────────────────────────────────────────────────
 
+  /** Returns number of blank cells to insert before day 1 (0–6, Sun-first). */
+  const getLeadingBlanks = (monthDate: Date): number => {
+    return new Date(monthDate.getFullYear(), monthDate.getMonth(), 1).getDay();
+  };
+
+  /** Returns all day numbers for the given month. */
+  const getMonthDays = (monthDate: Date) => {
     const year = monthDate.getFullYear();
     const month = monthDate.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const todayStr = toLocalDateString(new Date());
 
+    const days: { date: string; dayNumber: number; isPast: boolean }[] = [];
     for (let i = 1; i <= daysInMonth; i++) {
-      const date = new Date(year, month, i);
-      date.setHours(0, 0, 0, 0);
-
+      const dateObj = new Date(year, month, i);
+      const dateStr = toLocalDateString(dateObj);
       days.push({
-        date: date.toISOString().split('T')[0],
-        dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        date: dateStr,
         dayNumber: i,
-        month: date.toLocaleDateString('en-US', { month: 'short' }),
-        isPast: date < today,
+        isPast: dateStr < todayStr,
       });
     }
-
     return days;
   };
 
-  const monthDays = generateMonthDays(currentMonth);
+  const leadingBlanks = getLeadingBlanks(currentMonth);
+  const monthDays = getMonthDays(currentMonth);
+  const todayStr = toLocalDateString(new Date());
 
   const goToPreviousMonth = () => {
-    const d = new Date(currentMonth);
-    d.setMonth(d.getMonth() - 1);
-    setCurrentMonth(d);
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
 
   const goToNextMonth = () => {
-    const d = new Date(currentMonth);
-    d.setMonth(d.getMonth() + 1);
-    setCurrentMonth(d);
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
 
   const canGoPreviousMonth = () => {
     const today = new Date();
-    const prevMonth = new Date(currentMonth);
-    prevMonth.setMonth(prevMonth.getMonth() - 1);
-    return prevMonth.getMonth() >= today.getMonth() && prevMonth.getFullYear() >= today.getFullYear();
+    const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    return currentMonth > thisMonth;
   };
 
   const canGoNextMonth = () => {
     const today = new Date();
-    const maxMonth = new Date(today);
-    maxMonth.setMonth(maxMonth.getMonth() + 3);
+    const maxMonth = new Date(today.getFullYear(), today.getMonth() + 3, 1);
     return currentMonth < maxMonth;
   };
 
-  // Handle doctor selection
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
   const handleDoctorSelect = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
     sessionStorage.setItem('selectedDoctorBackup', JSON.stringify(doctor));
@@ -487,24 +515,24 @@ export default function BookAppointmentPage() {
     setCurrentStep(2);
   };
 
-  // Handle date selection
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
     sessionStorage.setItem('selectedDate', date);
     setSelectedSlot(null);
     sessionStorage.removeItem('selectedSlot');
 
-    const selectedDateObj = new Date(date);
-    setCurrentMonth(selectedDateObj);
+    const d = parseLocalDate(date);
+    // Keep the month view in sync when a day is picked
+    if (d.getMonth() !== currentMonth.getMonth() || d.getFullYear() !== currentMonth.getFullYear()) {
+      setCurrentMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+    }
   };
 
-  // Handle slot selection
   const handleSlotSelect = (slot: TimeSlot) => {
     setSelectedSlot(slot);
     sessionStorage.setItem('selectedSlot', JSON.stringify(slot));
   };
 
-  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -516,21 +544,16 @@ export default function BookAppointmentPage() {
     }
   };
 
-  // Validate form
   const validateForm = () => {
     const errors: Record<string, string> = {};
 
-    if (!formData.patient_name.trim()) {
-      errors.patient_name = 'Patient name is required';
-    }
+    if (!formData.patient_name.trim()) errors.patient_name = 'Patient name is required';
 
     if (!formData.patient_phone.trim()) {
       errors.patient_phone = 'Phone number is required';
     } else {
       const phoneDigits = formData.patient_phone.replace(/\D/g, '');
-      if (phoneDigits.length !== 10) {
-        errors.patient_phone = 'Please enter a valid 10-digit phone number';
-      }
+      if (phoneDigits.length !== 10) errors.patient_phone = 'Please enter a valid 10-digit phone number';
     }
 
     if (formData.patient_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.patient_email)) {
@@ -539,16 +562,13 @@ export default function BookAppointmentPage() {
 
     if (formData.patient_age) {
       const age = parseInt(formData.patient_age);
-      if (isNaN(age) || age < 0 || age > 150) {
-        errors.patient_age = 'Please enter a valid age';
-      }
+      if (isNaN(age) || age < 0 || age > 150) errors.patient_age = 'Please enter a valid age';
     }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // Submit booking
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
@@ -646,11 +666,8 @@ export default function BookAppointmentPage() {
         .update({ is_booked: true })
         .eq("id", selectedSlot.id);
 
-      if (slotUpdateError) {
-        console.error("Slot update error:", slotUpdateError);
-      }
+      if (slotUpdateError) console.error("Slot update error:", slotUpdateError);
 
-      // ⭐ Create the patient login account (auth user + link patient.user_id)
       try {
         const res = await fetch("/api/patients/ensure-account", {
           method: "POST",
@@ -666,11 +683,8 @@ export default function BookAppointmentPage() {
           }),
         });
         const json = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          console.warn("Patient account creation failed:", json?.error);
-        } else {
-          console.log("Patient account ready:", json);
-        }
+        if (!res.ok) console.warn("Patient account creation failed:", json?.error);
+        else console.log("Patient account ready:", json);
       } catch (accErr) {
         console.warn("ensure-account network error:", accErr);
       }
@@ -689,7 +703,6 @@ export default function BookAppointmentPage() {
     }
   };
 
-  // Reset booking
   const resetBooking = () => {
     setCurrentStep(1);
     setSelectedDoctor(null);
@@ -717,13 +730,10 @@ export default function BookAppointmentPage() {
     fetchDoctors();
   };
 
-  // Search doctors
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     clearTimeout((window as any).searchTimeout);
-    (window as any).searchTimeout = setTimeout(() => {
-      fetchDoctors();
-    }, 300);
+    (window as any).searchTimeout = setTimeout(() => { fetchDoctors(); }, 300);
   };
 
   return (
@@ -732,7 +742,6 @@ export default function BookAppointmentPage() {
         <TopBar />
         <MainNav />
 
-        {/* Page Header */}
         <div className="w-full bg-gradient-to-r from-[#1a3a5c] to-[#1a9fa8] text-white">
           <div className="max-w-[1200px] mx-auto px-3 sm:px-4 py-8 sm:py-12">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Book an Appointment</h1>
@@ -767,7 +776,6 @@ export default function BookAppointmentPage() {
           </div>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="max-w-[1200px] mx-auto px-3 sm:px-4 mt-4">
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-[13px] sm:text-[14px]">
@@ -776,7 +784,6 @@ export default function BookAppointmentPage() {
           </div>
         )}
 
-        {/* Booking Content */}
         <div className="max-w-[1200px] mx-auto px-3 sm:px-4 py-6 sm:py-8">
           {bookingSuccess ? (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sm:p-8 text-center max-w-2xl mx-auto">
@@ -791,7 +798,6 @@ export default function BookAppointmentPage() {
                 Booking Reference: <span className="font-mono font-semibold">{bookingReference}</span>
               </p>
 
-              {/* ⭐ Login info box */}
               <div className="bg-[#f0faf9] border border-[#cbecee] rounded-lg p-3 sm:p-4 mb-5 sm:mb-6 text-left">
                 <p className="text-[12px] sm:text-[13px] font-semibold text-[#1a3a5c] mb-1">
                   🔐 You can now log in to track your appointment
@@ -800,13 +806,9 @@ export default function BookAppointmentPage() {
                   Use your mobile number{" "}
                   <span className="font-semibold">{formData.patient_phone}</span> as both your
                   login ID and password at{" "}
-                  <Link
-                    href="/patient/login"
-                    className="text-[#1a9fa8] font-semibold hover:underline"
-                  >
+                  <Link href="/patient/login" className="text-[#1a9fa8] font-semibold hover:underline">
                     /patient/login
-                  </Link>
-                  .
+                  </Link>.
                 </p>
               </div>
 
@@ -819,7 +821,7 @@ export default function BookAppointmentPage() {
                   <div>
                     <p className="text-gray-500">Date</p>
                     <p className="font-semibold text-[#1a3a5c]">
-                      {selectedDate && new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      {selectedDate && parseLocalDate(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                   </div>
                   <div>
@@ -841,9 +843,8 @@ export default function BookAppointmentPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-              {/* Main Content */}
               <div className="lg:col-span-2 space-y-6">
-                {/* Step 1: Doctor Selection */}
+                {/* Step 1 */}
                 {currentStep === 1 && (
                   <div className="space-y-4">
                     <h2 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-4">Select a Doctor</h2>
@@ -860,10 +861,7 @@ export default function BookAppointmentPage() {
                         />
                         {searchTerm && (
                           <button
-                            onClick={() => {
-                              setSearchTerm('');
-                              fetchDoctors();
-                            }}
+                            onClick={() => { setSearchTerm(''); fetchDoctors(); }}
                             className="text-gray-400 hover:text-gray-600 text-lg leading-none flex-shrink-0"
                             aria-label="Clear search"
                           >
@@ -904,7 +902,10 @@ export default function BookAppointmentPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <h3 className="text-[15px] sm:text-lg font-bold text-[#1a1a1a]">{doctor.name}</h3>
-                                  <p className="text-[12px] sm:text-sm text-gray-600">{doctor.degree} | {doctor.specialization}</p>
+                                  <p className="text-[12px] sm:text-sm text-gray-600">
+                                    {doctor.degree}
+                                    {doctor.specialization && ` | ${doctor.specialization}`}
+                                  </p>
                                   <div className="flex items-center gap-3 sm:gap-4 mt-2 sm:mt-3 text-[12px] sm:text-sm flex-wrap">
                                     <span className="flex items-center gap-1 text-gray-600">
                                       <CalendarIcon /> {doctor.experience} Years
@@ -929,7 +930,7 @@ export default function BookAppointmentPage() {
                   </div>
                 )}
 
-                {/* Step 2: Schedule Selection */}
+                {/* Step 2 */}
                 {currentStep === 2 && selectedDoctor && (
                   <div className="space-y-6">
                     <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
@@ -958,17 +959,20 @@ export default function BookAppointmentPage() {
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-[#1a3a5c] text-[14px] sm:text-base">{selectedDoctor.name}</h3>
-                          <p className="text-[12px] sm:text-sm text-gray-600 truncate">{selectedDoctor.degree} | {selectedDoctor.specialization}</p>
+                          <p className="text-[12px] sm:text-sm text-gray-600 truncate">
+                            {selectedDoctor.degree}
+                            {selectedDoctor.specialization && ` | ${selectedDoctor.specialization}`}
+                          </p>
                         </div>
                       </div>
 
-                      {/* Date Selection with Month Navigation */}
+                      {/* Date Selection */}
                       <div className="mb-6 sm:mb-8">
                         <div className="flex items-center justify-between mb-3 sm:mb-4 flex-wrap gap-2">
                           <h4 className="text-[14px] sm:text-base font-semibold text-[#1a3a5c]">Select Date</h4>
                           {selectedDate && (
                             <span className="text-[11px] sm:text-sm text-[#1a9fa8] font-medium">
-                              {new Date(selectedDate).toLocaleDateString('en-US', {
+                              {parseLocalDate(selectedDate).toLocaleDateString('en-US', {
                                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
                               })}
                             </span>
@@ -1007,31 +1011,31 @@ export default function BookAppointmentPage() {
                           ))}
                         </div>
 
-                        {/* Calendar Grid */}
+                        {/* Calendar Grid — with proper leading blanks */}
                         <div className="grid grid-cols-7 gap-1">
-                          {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() }, (_, i) => (
-                            <div key={`empty-${i}`} className="py-2" />
+                          {Array.from({ length: leadingBlanks }).map((_, i) => (
+                            <div key={`blank-${i}`} className="py-2" aria-hidden="true" />
                           ))}
 
                           {monthDays.map((day) => {
                             const isSelected = selectedDate === day.date;
-                            const isToday = day.date === new Date().toISOString().split('T')[0];
+                            const isToday = day.date === todayStr;
 
                             return (
                               <button
                                 key={day.date}
                                 disabled={day.isPast}
                                 onClick={() => handleDateSelect(day.date)}
-                                className={`relative flex flex-col items-center py-1.5 sm:py-2 px-1 rounded-lg transition-all duration-200 ${
+                                className={`relative flex flex-col items-center justify-center aspect-square rounded-lg transition-all duration-200 ${
                                   isSelected
-                                    ? 'bg-[#1a9fa8] text-white shadow-md transform scale-105'
+                                    ? 'bg-[#1a9fa8] text-white shadow-md'
                                     : day.isPast
                                     ? 'text-gray-300 cursor-not-allowed'
                                     : 'hover:bg-gray-100 text-gray-700'
                                 }`}
                               >
                                 {isToday && !isSelected && (
-                                  <span className="absolute -top-1 w-2 h-2 bg-[#e85d26] rounded-full"></span>
+                                  <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#e85d26] rounded-full" />
                                 )}
                                 <span className={`text-[12px] sm:text-sm font-semibold ${isSelected ? 'text-white' : ''}`}>
                                   {day.dayNumber}
@@ -1091,7 +1095,7 @@ export default function BookAppointmentPage() {
                                     onClick={() => handleSlotSelect(slot)}
                                     className={`relative py-2 sm:py-3 px-1.5 sm:px-2 rounded-lg text-[12px] sm:text-sm font-semibold transition-all duration-200 ${
                                       isSelected
-                                        ? 'bg-[#1a9fa8] text-white shadow-md transform scale-105'
+                                        ? 'bg-[#1a9fa8] text-white shadow-md'
                                         : 'bg-white border-2 border-gray-200 hover:border-[#1a9fa8] text-gray-700 hover:bg-gray-50'
                                     }`}
                                   >
@@ -1114,14 +1118,13 @@ export default function BookAppointmentPage() {
                         </div>
                       )}
 
-                      {/* Selected Slot Summary */}
                       {selectedSlot && selectedDate && (
                         <div className="mt-5 sm:mt-6 p-3 sm:p-4 bg-[#f0faf5] border border-[#1a9fa8] rounded-lg">
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                               <p className="text-[12px] sm:text-sm font-semibold text-[#1a3a5c]">Selected Appointment</p>
                               <p className="text-[11px] sm:text-sm text-gray-600 mt-1">
-                                {new Date(selectedDate).toLocaleDateString('en-US', {
+                                {parseLocalDate(selectedDate).toLocaleDateString('en-US', {
                                   weekday: 'long', day: 'numeric', month: 'long'
                                 })} at {selectedSlot.start_time.slice(0, 5)}
                               </p>
@@ -1139,7 +1142,6 @@ export default function BookAppointmentPage() {
                         </div>
                       )}
 
-                      {/* Continue Button */}
                       {selectedSlot && (
                         <div className="mt-5 sm:mt-6">
                           <button
@@ -1160,7 +1162,7 @@ export default function BookAppointmentPage() {
                   </div>
                 )}
 
-                {/* Step 3: Patient Details */}
+                {/* Step 3 */}
                 {currentStep === 3 && selectedDoctor && (
                   <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
                     <button
@@ -1328,7 +1330,10 @@ export default function BookAppointmentPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-[13px] sm:text-sm truncate">{selectedDoctor.name}</p>
-                          <p className="text-[11px] sm:text-xs text-gray-500 truncate">{selectedDoctor.degree} | {selectedDoctor.specialization}</p>
+                          <p className="text-[11px] sm:text-xs text-gray-500 truncate">
+                            {selectedDoctor.degree}
+                            {selectedDoctor.specialization && ` | ${selectedDoctor.specialization}`}
+                          </p>
                         </div>
                       </div>
 
@@ -1341,7 +1346,7 @@ export default function BookAppointmentPage() {
                           <div className="flex justify-between">
                             <span className="text-gray-600">Date</span>
                             <span className="font-medium">
-                              {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
+                              {parseLocalDate(selectedDate).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
                             </span>
                           </div>
                         )}
@@ -1371,7 +1376,6 @@ export default function BookAppointmentPage() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="w-full bg-[#f0faf5] border-t border-gray-200">
         <div className="w-full" style={{ height: 180 }}>
           <iframe
