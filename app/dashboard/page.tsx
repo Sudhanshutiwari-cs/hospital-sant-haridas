@@ -64,7 +64,7 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      // Get current session
+      // Get current sessionn
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
