@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase-client';
 
@@ -20,7 +21,7 @@ export default function LoginPage() {
   const checkSession = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (session) {
         // Verify user role
         const { data: doctorData } = await supabase
@@ -45,7 +46,7 @@ export default function LoginPage() {
           return;
         }
       }
-      
+
       setCheckingSession(false);
     } catch (error) {
       console.error('Session check error:', error);
@@ -112,109 +113,134 @@ export default function LoginPage() {
 
   if (checkingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#f7f8fa]">
+        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-[#1a9fa8]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
-            <span className="text-white text-2xl font-bold">M</span>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">MediCare</h1>
-          <p className="text-gray-600 mt-2">Hospital Management System</p>
+    <div className="min-h-screen bg-gradient-to-br from-[#eaf6f7] via-white to-[#eaf6f7] flex items-center justify-center px-3 sm:px-4 py-8">
+      <div className="w-full max-w-md">
+        {/* Top: back to site link */}
+        <div className="flex justify-center mb-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-[13px] text-gray-500 hover:text-[#1a9fa8] transition-colors"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Back to Home
+          </Link>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
+        <div className="bg-white rounded-2xl shadow-xl w-full p-5 sm:p-8 border border-gray-100">
+          {/* Header with hospital branding */}
+          <div className="text-center mb-6 sm:mb-8">
+            <Link href="/" className="inline-block mb-3">
+              <img
+                src="https://res.cloudinary.com/df01whs60/image/upload/v1785656956/Sant_haridas_hospital_logo_page-0001_vu9ssi.jpg"
+                alt="Sant Haridas Hospital"
+                className="h-14 sm:h-16 w-auto object-contain mx-auto"
+              />
+            </Link>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1a3a5c]">
+              Sant Haridas Hospital
+            </h1>
+            <p className="text-[13px] sm:text-sm text-gray-600 mt-1">
+              Staff & Doctor Login Portal
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-5">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-[13px] sm:text-[14px]">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-[13px] sm:text-sm font-semibold text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#1a9fa8] focus:border-[#1a9fa8] transition-colors"
+                placeholder="Enter your email"
+              />
             </div>
-          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter your email"
-            />
+            <div>
+              <label className="block text-[13px] sm:text-sm font-semibold text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#1a9fa8] focus:border-[#1a9fa8] transition-colors"
+                placeholder="Enter your password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-2.5 sm:py-3 px-4 rounded-lg text-white font-semibold text-[14px] sm:text-[15px] transition-colors ${
+                loading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-[#1a9fa8] hover:bg-[#158791]'
+              }`}
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          {/* Help text */}
+          <div className="mt-6 text-center">
+            <p className="text-[12px] text-gray-500">
+              Forgot your password? Contact{' '}
+              <a
+                href="mailto:santharidashospital@gmail.com"
+                className="text-[#1a9fa8] hover:underline font-medium"
+              >
+                santharidashospital@gmail.com
+              </a>
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter your password"
-            />
+          {/* Footer links */}
+          <div className="mt-6 border-t border-gray-200 pt-5 flex items-center justify-center gap-4 flex-wrap text-[12px] text-gray-500">
+            <Link href="/" className="hover:text-[#1a9fa8] transition-colors">
+              Home
+            </Link>
+            <span className="text-gray-300">•</span>
+            <Link href="/contact" className="hover:text-[#1a9fa8] transition-colors">
+              Contact
+            </Link>
+            <span className="text-gray-300">•</span>
+            <Link href="/book-appointment" className="hover:text-[#1a9fa8] transition-colors">
+              Book Appointment
+            </Link>
           </div>
+        </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 px-4 rounded-lg text-white font-medium ${
-              loading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="mt-8 border-t border-gray-200 pt-6">
-          <p className="text-sm text-gray-600 text-center mb-3">Demo Credentials</p>
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('admin@medicare.com');
-                setPassword('Admin@123456');
-              }}
-              className="w-full text-left px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg"
+        {/* Patient login alternate */}
+        <div className="mt-4 text-center">
+          <p className="text-[12px] text-gray-500">
+            Are you a patient?{' '}
+            <Link
+              href="/patient/login"
+              className="text-[#1a9fa8] font-semibold hover:underline"
             >
-              <span className="text-sm">
-                <strong>Admin:</strong> admin@medicare.com / Admin@123456
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('doctor@medicare.com');
-                setPassword('Doctor@123456');
-              }}
-              className="w-full text-left px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg"
-            >
-              <span className="text-sm">
-                <strong>Doctor:</strong> doctor@medicare.com / Doctor@123456
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('reception@medicare.com');
-                setPassword('Reception@123456');
-              }}
-              className="w-full text-left px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg"
-            >
-              <span className="text-sm">
-                <strong>Receptionist:</strong> reception@medicare.com / Reception@123456
-              </span>
-            </button>
-          </div>
+              Patient Login
+            </Link>
+          </p>
         </div>
       </div>
     </div>
