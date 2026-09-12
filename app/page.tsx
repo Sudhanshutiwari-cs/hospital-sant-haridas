@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 // ── SVG Icons ────────────────────────────────────────────────────────────────
 
@@ -10,14 +11,14 @@ function SiteLogo() {
     <img
       src="https://res.cloudinary.com/df01whs60/image/upload/v1785656956/Sant_haridas_hospital_logo_page-0001_vu9ssi.jpg"
       alt="Sant Haridas Hospital"
-      className="h-12 w-auto object-contain"
+      className="h-8 sm:h-10 md:h-12 w-auto object-contain"
     />
   );
 }
 
 function PhoneIcon({ color = "#fff" }: { color?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline-block">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline-block">
       <path
         d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"
         fill={color}
@@ -28,7 +29,7 @@ function PhoneIcon({ color = "#fff" }: { color?: string }) {
 
 function WhatsAppIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline-block">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline-block">
       <circle cx="12" cy="12" r="12" fill="#25D366" />
       <path
         d="M17.5 14.4c-.3-.1-1.6-.8-1.8-.9-.2-.1-.4-.1-.6.1-.2.2-.7.9-.9 1-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.4.1-.1.2-.3.3-.4.1-.2.1-.3 0-.5-.1-.1-.6-1.5-.8-2-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.4.1-.7.3C7.4 8 7 8.9 7 9.9c0 1 .7 2 .8 2.2.1.1 1.5 2.3 3.6 3.2.5.2.9.4 1.2.5.5.2 1 .1 1.3.1.4-.1 1.3-.5 1.5-1s.2-.9.1-1z"
@@ -40,7 +41,7 @@ function WhatsAppIcon() {
 
 function EmailIcon({ color = "#1a3a5c" }: { color?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline-block">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline-block">
       <rect x="2" y="4" width="20" height="16" rx="2" stroke={color} strokeWidth="1.8" />
       <path d="M2 7l10 7 10-7" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
     </svg>
@@ -49,9 +50,21 @@ function EmailIcon({ color = "#1a3a5c" }: { color?: string }) {
 
 function LocationIcon({ color = "#1a3a5c" }: { color?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline-block">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline-block">
       <path d="M12 22s8-7.5 8-13a8 8 0 10-16 0c0 5.5 8 13 8 13z" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
       <circle cx="12" cy="9" r="3" stroke={color} strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function MenuIcon({ open }: { open: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-[#1a3a5c]">
+      {open ? (
+        <path d="M6 6l12 12M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      ) : (
+        <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      )}
     </svg>
   );
 }
@@ -60,7 +73,7 @@ function LocationIcon({ color = "#1a3a5c" }: { color?: string }) {
 
 function EyeOpdIcon() {
   return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
       <path d="M24 8C12 8 5 19 5 24s7 16 19 16 19-11 19-16-7-16-19-16z" stroke="#1a3a5c" strokeWidth="1.8" strokeLinejoin="round" />
       <circle cx="24" cy="24" r="7" stroke="#1a9fa8" strokeWidth="1.5" />
       <circle cx="24" cy="24" r="3" fill="#1a9fa8" />
@@ -70,7 +83,7 @@ function EyeOpdIcon() {
 
 function GynecologyIcon() {
   return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
       <circle cx="24" cy="18" r="9" stroke="#1a3a5c" strokeWidth="1.8" />
       <path d="M24 27v13M17 33h14" stroke="#1a3a5c" strokeWidth="1.8" strokeLinecap="round" />
       <path d="M21 15a3 3 0 016 0" stroke="#1a9fa8" strokeWidth="1.5" strokeLinecap="round" />
@@ -80,7 +93,7 @@ function GynecologyIcon() {
 
 function MedicineIcon() {
   return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
       <rect x="8" y="18" width="32" height="20" rx="4" stroke="#1a3a5c" strokeWidth="1.8" />
       <path d="M18 18v-4a6 6 0 1112 0v4" stroke="#1a3a5c" strokeWidth="1.8" strokeLinecap="round" />
       <path d="M24 24v8M20 28h8" stroke="#1a9fa8" strokeWidth="1.8" strokeLinecap="round" />
@@ -90,7 +103,7 @@ function MedicineIcon() {
 
 function PathologyIcon() {
   return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
       <path d="M18 8h12v6l6 20a4 4 0 01-4 5H16a4 4 0 01-4-5l6-20V8z" stroke="#1a3a5c" strokeWidth="1.8" strokeLinejoin="round" />
       <path d="M14 30h20" stroke="#1a9fa8" strokeWidth="1.5" />
       <circle cx="22" cy="35" r="2" fill="#1a9fa8" opacity="0.6" />
@@ -101,7 +114,7 @@ function PathologyIcon() {
 
 function PhysiotherapyIcon() {
   return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
       <circle cx="20" cy="12" r="5" stroke="#1a3a5c" strokeWidth="1.8" />
       <path d="M12 40V26a8 8 0 0116 0v6" stroke="#1a3a5c" strokeWidth="1.8" strokeLinecap="round" />
       <path d="M28 32l8 4M28 24l8-4" stroke="#1a9fa8" strokeWidth="1.8" strokeLinecap="round" />
@@ -113,7 +126,7 @@ function PhysiotherapyIcon() {
 
 function OpdIcon() {
   return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
       <rect x="8" y="10" width="32" height="28" rx="3" stroke="#1a3a5c" strokeWidth="1.8" />
       <path d="M8 18h32" stroke="#1a3a5c" strokeWidth="1.5" />
       <circle cx="13" cy="14" r="1" fill="#1a3a5c" />
@@ -125,7 +138,7 @@ function OpdIcon() {
 
 function WardIcon() {
   return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
       <path d="M6 40V14a2 2 0 012-2h32a2 2 0 012 2v26" stroke="#1a3a5c" strokeWidth="1.8" strokeLinejoin="round" />
       <path d="M6 24h36M6 32h36" stroke="#1a9fa8" strokeWidth="1.5" />
       <circle cx="16" cy="19" r="2" fill="#1a9fa8" />
@@ -136,7 +149,7 @@ function WardIcon() {
 
 function RoomIcon() {
   return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
       <path d="M10 40V12a2 2 0 012-2h24a2 2 0 012 2v28" stroke="#1a3a5c" strokeWidth="1.8" strokeLinejoin="round" />
       <path d="M6 40h36" stroke="#1a3a5c" strokeWidth="1.8" strokeLinecap="round" />
       <rect x="18" y="22" width="12" height="10" rx="1" stroke="#1a9fa8" strokeWidth="1.5" />
@@ -147,7 +160,7 @@ function RoomIcon() {
 
 function LabIcon() {
   return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
       <rect x="8" y="14" width="32" height="26" rx="3" stroke="#1a3a5c" strokeWidth="1.8" />
       <path d="M16 14V8h16v6" stroke="#1a3a5c" strokeWidth="1.8" strokeLinecap="round" />
       <path d="M16 24h16M16 30h10" stroke="#1a9fa8" strokeWidth="1.5" strokeLinecap="round" />
@@ -158,40 +171,37 @@ function LabIcon() {
 
 // ── Nav data ────────────────────────────────────────────────────────────────
 
-const topNavLinks: string[] = [];
-
 const mainNavItems = [
-  "Doctors",
-  "Services",
-  "Blogs",
-  "About Us",
-  "Contact Us",
+  { label: "Doctors", href: "/doctors" },
+  { label: "Services", href: "/services" },
+  { label: "Blogs", href: "/blogs" },
+  { label: "About Us", href: "/about" },
+  { label: "Contact Us", href: "#contact" },
 ];
 
 // ── Top Bar ─────────────────────────────────────────────────────────────────
 
 function TopBar() {
   return (
-    <div className="w-full bg-[#1a9fa8] text-white text-sm">
-      <div className="max-w-[1400px] mx-auto px-4 flex items-center justify-end gap-6 h-10">
-        {topNavLinks.map((link) => (
-          <a key={link} href="#" className="hover:underline whitespace-nowrap transition-opacity hover:opacity-80 font-medium">
-            {link}
-          </a>
-        ))}
+    <div className="w-full bg-[#1a9fa8] text-white text-[11px] sm:text-xs md:text-sm">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-4 flex items-center justify-center sm:justify-end gap-3 sm:gap-4 md:gap-6 h-9 sm:h-10">
         <a
           href="https://wa.me/919415057201"
-          className="flex items-center gap-1.5 hover:underline whitespace-nowrap font-medium"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 sm:gap-1.5 hover:underline whitespace-nowrap font-medium"
         >
           <WhatsAppIcon />
-          WhatsApp Us (24/7)
+          <span className="hidden xs:inline">WhatsApp Us</span>
+          <span className="xs:hidden">WhatsApp</span>
         </a>
         <a
           href="tel:+919540740947"
-          className="flex items-center gap-1.5 hover:underline whitespace-nowrap font-medium"
+          className="flex items-center gap-1 sm:gap-1.5 hover:underline whitespace-nowrap font-medium"
         >
           <PhoneIcon />
-          +91 95407 40947
+          <span className="hidden sm:inline">+91 95407 40947</span>
+          <span className="sm:hidden">Call</span>
         </a>
       </div>
     </div>
@@ -201,45 +211,72 @@ function TopBar() {
 // ── Main Nav ────────────────────────────────────────────────────────────────
 
 function MainNav() {
-  const getNavLink = (item: string): string => {
-    switch (item) {
-      case "Doctors": return "/doctors";
-      case "Services": return "/services";
-      case "Blogs": return "/blogs";
-      case "About Us": return "/about";
-      case "Contact Us": return "#contact";
-      default: return "#";
-    }
-  };
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <header className="w-full bg-white shadow-sm sticky top-0 z-50">
-      <div className="max-w-[1400px] mx-auto px-4 flex items-center justify-between h-16">
-        <a href="/" className="flex-shrink-0">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-4 flex items-center justify-between h-14 sm:h-16">
+        <Link href="/" className="flex-shrink-0">
           <SiteLogo />
-        </a>
+        </Link>
 
-        <nav className="flex items-center gap-6">
+        {/* Desktop nav */}
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
           {mainNavItems.map((item) => (
-            <a
-              key={item}
-              href={getNavLink(item)}
-              className="px-2 py-5 text-[15px] font-semibold text-gray-700 hover:text-[#1a9fa8] transition-colors"
+            <Link
+              key={item.label}
+              href={item.href}
+              className="px-2 py-5 text-[14px] xl:text-[15px] font-semibold text-gray-700 hover:text-[#1a9fa8] transition-colors"
             >
-              {item}
-            </a>
+              {item.label}
+            </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-4">
-          <a
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Link
             href="#contact"
-            className="bg-[#e85d26] hover:bg-[#d14e1c] text-white font-semibold text-sm px-5 py-2.5 rounded transition-colors whitespace-nowrap"
+            className="hidden sm:inline-block bg-[#e85d26] hover:bg-[#d14e1c] text-white font-semibold text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 rounded transition-colors whitespace-nowrap"
           >
-            Book an Appointment
-          </a>
+            Book Appointment
+          </Link>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="lg:hidden p-2 -mr-1"
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+          >
+            <MenuIcon open={mobileOpen} />
+          </button>
         </div>
       </div>
+
+      {/* Mobile nav dropdown */}
+      {mobileOpen && (
+        <nav className="lg:hidden bg-white border-t border-gray-100 shadow-md">
+          <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-2 flex flex-col">
+            {mainNavItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="py-3 px-2 text-[15px] font-semibold text-gray-700 hover:text-[#1a9fa8] border-b border-gray-50 last:border-0 transition-colors"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              href="#contact"
+              onClick={() => setMobileOpen(false)}
+              className="mt-3 mb-2 bg-[#e85d26] hover:bg-[#d14e1c] text-white font-semibold text-sm px-5 py-2.5 rounded transition-colors text-center"
+            >
+              Book an Appointment
+            </Link>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
@@ -251,7 +288,7 @@ function EmergencyTab() {
     <div className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex">
       <a
         href="tel:+919540740947"
-        className="bg-[#cc0000] text-white font-bold text-[11px] tracking-[0.25em] py-4 px-2.5 flex flex-col items-center gap-0 cursor-pointer hover:bg-[#b00000] transition-colors"
+        className="bg-[#cc0000] text-white font-bold text-[9px] sm:text-[11px] tracking-[0.2em] sm:tracking-[0.25em] py-3 sm:py-4 px-2 sm:px-2.5 flex flex-col items-center gap-0 cursor-pointer hover:bg-[#b00000] transition-colors"
         style={{ writingMode: "vertical-lr", transform: "rotate(180deg)" }}
       >
         EMERGENCY
@@ -264,15 +301,12 @@ function FloatingPhoneBadge() {
   return (
     <a
       href="tel:+919540740947"
-      className="absolute bottom-5 right-5 z-20 flex items-center gap-2.5 bg-[#1a3a5c] hover:bg-[#122b47] text-white rounded-full px-4 py-2.5 shadow-lg transition-colors"
+      className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 z-20 flex items-center gap-2 sm:gap-2.5 bg-[#1a3a5c] hover:bg-[#122b47] text-white rounded-full px-3 sm:px-4 py-2 sm:py-2.5 shadow-lg transition-colors"
     >
-      <div className="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
-        <span className="text-[11px] font-bold leading-none">24/7</span>
-      </div>
-      <div className="flex items-center gap-1.5">
+      <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
         <PhoneIcon />
-        <span className="font-semibold text-sm tracking-wide">+91 95407 40947</span>
       </div>
+      <span className="font-semibold text-xs sm:text-sm tracking-wide">+91 95407 40947</span>
     </a>
   );
 }
@@ -280,7 +314,10 @@ function FloatingPhoneBadge() {
 function HeroSection() {
   return (
     <section className="relative w-full overflow-hidden">
-      <div className="relative w-full" style={{ height: "calc(100vh - 106px)", minHeight: 480, maxHeight: 680 }}>
+      <div
+        className="relative w-full"
+        style={{ height: "calc(100vh - 94px)", minHeight: 360, maxHeight: 680 }}
+      >
         <Image
           src="/hospital-hero.png"
           alt="Sant Haridas Hospital building"
@@ -403,20 +440,20 @@ function ServicesSection() {
   const [activeTab, setActiveTab] = useState<"services" | "facilities">("services");
 
   return (
-    <section className="w-full bg-white py-12 px-4">
-      <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-10 items-start">
+    <section className="w-full bg-white py-10 sm:py-12 px-3 sm:px-4">
+      <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
 
         {/* Left: Services / Facilities */}
-        <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold text-[#1a3a5c] border-b-2 border-gray-200 pb-3 mb-5">
+        <div className="flex-1 min-w-0 w-full">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1a3a5c] border-b-2 border-gray-200 pb-3 mb-4 sm:mb-5">
             Our Medical Services &amp; Facilities
           </h2>
 
           {/* Tabs */}
-          <div className="flex gap-8 mb-8 border-b border-gray-200">
+          <div className="flex gap-6 sm:gap-8 mb-6 sm:mb-8 border-b border-gray-200 overflow-x-auto">
             <button
               onClick={() => setActiveTab("services")}
-              className={`pb-3 text-[15px] font-semibold transition-colors relative ${
+              className={`pb-3 text-[14px] sm:text-[15px] font-semibold transition-colors relative whitespace-nowrap ${
                 activeTab === "services" ? "text-[#1a9fa8]" : "text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -427,7 +464,7 @@ function ServicesSection() {
             </button>
             <button
               onClick={() => setActiveTab("facilities")}
-              className={`pb-3 text-[15px] font-semibold transition-colors relative ${
+              className={`pb-3 text-[14px] sm:text-[15px] font-semibold transition-colors relative whitespace-nowrap ${
                 activeTab === "facilities" ? "text-[#1a9fa8]" : "text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -440,16 +477,20 @@ function ServicesSection() {
 
           {/* Services grid */}
           {activeTab === "services" && (
-            <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-4 sm:gap-y-5">
               {medicalServices.map((s) => (
-                <a key={s.name} href="#contact" className="flex items-center gap-4 group">
-                  <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
+                <Link
+                  key={s.name}
+                  href="#contact"
+                  className="flex items-center gap-3 sm:gap-4 group"
+                >
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 flex items-center justify-center">
                     {s.icon}
                   </div>
-                  <span className="text-[15px] text-[#1a3a5c] font-medium group-hover:text-[#1a9fa8] transition-colors leading-snug">
+                  <span className="text-[13px] sm:text-[15px] text-[#1a3a5c] font-medium group-hover:text-[#1a9fa8] transition-colors leading-snug">
                     {s.name}
                   </span>
-                </a>
+                </Link>
               ))}
             </div>
           )}
@@ -460,40 +501,40 @@ function ServicesSection() {
               {facilitiesCare.map((f) => (
                 <li key={f} className="flex items-start gap-2.5">
                   <CheckIcon />
-                  <span className="text-[15px] text-[#1a3a5c] font-medium leading-snug">{f}</span>
+                  <span className="text-[13px] sm:text-[15px] text-[#1a3a5c] font-medium leading-snug">{f}</span>
                 </li>
               ))}
             </ul>
           )}
 
-          <a
+          <Link
             href="#contact"
-            className="inline-flex items-center gap-1 mt-8 text-[#1a3a5c] font-semibold text-[15px] hover:text-[#1a9fa8] transition-colors"
+            className="inline-flex items-center gap-1 mt-6 sm:mt-8 text-[#1a3a5c] font-semibold text-[14px] sm:text-[15px] hover:text-[#1a9fa8] transition-colors"
           >
             Book a Consultation
             <ChevronRight className="w-4 h-4" />
-          </a>
+          </Link>
         </div>
 
         {/* Right: Looking for an Expert card */}
         <div className="w-full lg:w-[420px] flex-shrink-0">
-          <div className="relative rounded-3xl overflow-hidden" style={{ backgroundColor: "#1a9fa8", minHeight: 360 }}>
-            <div className="px-8 pt-8 pb-4 relative z-10">
-              <h3 className="text-2xl font-bold text-white mb-2 leading-snug">
+          <div className="relative rounded-3xl overflow-hidden" style={{ backgroundColor: "#1a9fa8", minHeight: 320 }}>
+            <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-4 relative z-10">
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 leading-snug">
                 Looking for a Specialist?
               </h3>
-              <p className="text-white/85 text-[14px] leading-relaxed mb-6">
-                Sant Haridas Hospital is home to experienced doctors<br />across multiple medical disciplines.
+              <p className="text-white/85 text-[13px] sm:text-[14px] leading-relaxed mb-5 sm:mb-6">
+                Sant Haridas Hospital is home to experienced doctors<br className="hidden sm:block" />across multiple medical disciplines.
               </p>
-              <a
+              <Link
                 href="#contact"
-                className="inline-flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122b47] text-white font-semibold text-[15px] px-6 py-3 rounded transition-colors"
+                className="inline-flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122b47] text-white font-semibold text-[14px] sm:text-[15px] px-5 sm:px-6 py-2.5 sm:py-3 rounded transition-colors"
               >
                 Contact Us
                 <ChevronRight className="w-4 h-4" />
-              </a>
+              </Link>
             </div>
-            <div className="relative z-10 px-2 pb-2" style={{ height: 240 }}>
+            <div className="relative z-10 px-2 pb-2" style={{ height: 200 }}>
               <DoctorIllustration />
             </div>
           </div>
@@ -535,31 +576,31 @@ const blogPosts = [
 
 function HealthBlogsSection() {
   return (
-    <section className="w-full bg-white py-12 px-4">
+    <section className="w-full bg-white py-10 sm:py-12 px-3 sm:px-4">
       <div className="max-w-[1200px] mx-auto">
-        <div className="flex items-center justify-between mb-6 border-b-2 border-gray-200 pb-3">
-          <h2 className="text-2xl font-bold text-[#1a3a5c] underline decoration-[#1a3a5c] underline-offset-4">
+        <div className="flex items-center justify-between mb-5 sm:mb-6 border-b-2 border-gray-200 pb-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1a3a5c] underline decoration-[#1a3a5c] underline-offset-4">
             Health Blogs
           </h2>
-          <a
-            href="#"
-            className="flex items-center gap-1 text-[#1a3a5c] font-semibold text-sm hover:text-[#1a9fa8] transition-colors"
+          <Link
+            href="/blogs"
+            className="flex items-center gap-1 text-[#1a3a5c] font-semibold text-xs sm:text-sm hover:text-[#1a9fa8] transition-colors"
           >
             View all
-            <ChevronRight className="w-4 h-4" />
-          </a>
+            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {blogPosts.map((post) => (
-            <a key={post.fullTitle} href="#" className="group flex flex-col">
-              <div className="relative rounded-lg overflow-hidden bg-[#d6eef2]" style={{ height: 200 }}>
-                <div className="absolute inset-0 z-10 flex flex-col justify-center pl-5 pr-[46%]">
-                  <p className="text-[#1a3a5c] font-bold text-[15px] leading-tight whitespace-pre-line mb-3">
+            <Link key={post.fullTitle} href="/blogs" className="group flex flex-col">
+              <div className="relative rounded-lg overflow-hidden bg-[#d6eef2]" style={{ height: 180 }}>
+                <div className="absolute inset-0 z-10 flex flex-col justify-center pl-4 sm:pl-5 pr-[46%]">
+                  <p className="text-[#1a3a5c] font-bold text-[13px] sm:text-[15px] leading-tight whitespace-pre-line mb-2 sm:mb-3">
                     {post.title}
                   </p>
-                  <div className="w-10 h-[3px] bg-[#1a9fa8] mb-3" />
-                  <p className="text-[#1a3a5c] text-[12px] leading-snug whitespace-pre-line">
+                  <div className="w-8 sm:w-10 h-[3px] bg-[#1a9fa8] mb-2 sm:mb-3" />
+                  <p className="text-[#1a3a5c] text-[11px] sm:text-[12px] leading-snug whitespace-pre-line">
                     {post.subtitle}
                   </p>
                 </div>
@@ -581,14 +622,14 @@ function HealthBlogsSection() {
               </div>
 
               <div className="mt-3 flex flex-col gap-1.5">
-                <p className="text-[#1a3a5c] font-semibold text-[13px] leading-snug group-hover:text-[#1a9fa8] transition-colors line-clamp-2">
+                <p className="text-[#1a3a5c] font-semibold text-[12px] sm:text-[13px] leading-snug group-hover:text-[#1a9fa8] transition-colors line-clamp-2">
                   {post.fullTitle}
                 </p>
-                <p className="text-gray-500 text-[12px] leading-relaxed line-clamp-2">
+                <p className="text-gray-500 text-[11px] sm:text-[12px] leading-relaxed line-clamp-2">
                   {post.excerpt}
                 </p>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>
@@ -647,30 +688,30 @@ function FeelFreeSection() {
   }
 
   return (
-    <section className="w-full bg-white py-12 px-4">
-      <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-10 items-start">
+    <section className="w-full bg-white py-10 sm:py-12 px-3 sm:px-4">
+      <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
         <div className="w-full lg:w-[340px] flex-shrink-0">
-          <h2 className="text-2xl font-bold text-[#1a1a1a] mb-5">Feel Free to Ask Us</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4 sm:mb-5">Feel Free to Ask Us</h2>
 
-          <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-            <div className="relative w-full" style={{ height: 240 }}>
+          <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm max-w-sm lg:max-w-none">
+            <div className="relative w-full" style={{ height: 200 }}>
               <Image src="/faq-woman.png" alt="Woman in a thinking pose" fill className="object-cover object-top" />
             </div>
 
             <div className="px-4 py-3 bg-white">
-              <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-2.5 focus-within:border-[#1a9fa8] transition-colors">
+              <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 focus-within:border-[#1a9fa8] transition-colors">
                 <input
                   type="text"
                   placeholder="Ask your question"
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
-                  className="flex-1 text-[14px] text-gray-600 placeholder-gray-400 outline-none bg-transparent"
+                  className="flex-1 min-w-0 text-[13px] sm:text-[14px] text-gray-600 placeholder-gray-400 outline-none bg-transparent"
                 />
                 <button
                   aria-label="Submit question"
-                  className="w-7 h-7 rounded-full border-2 border-gray-300 hover:border-[#1a9fa8] flex items-center justify-center transition-colors flex-shrink-0"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-gray-300 hover:border-[#1a9fa8] flex items-center justify-center transition-colors flex-shrink-0"
                 >
-                  <svg className="w-3.5 h-3.5 text-gray-400" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
@@ -679,23 +720,23 @@ function FeelFreeSection() {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col gap-3 pt-[68px]">
+        <div className="flex-1 w-full flex flex-col gap-3 lg:pt-[68px]">
           {faqItems.map((item) => {
             const isOpen = openId === item.id;
             return (
               <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden">
                 <button
                   onClick={() => toggle(item.id)}
-                  className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left"
+                  className="w-full flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 bg-white hover:bg-gray-50 transition-colors text-left"
                   aria-expanded={isOpen}
                 >
-                  <span className="text-[15px] font-semibold text-[#1a1a1a]">{item.label}</span>
+                  <span className="text-[14px] sm:text-[15px] font-semibold text-[#1a1a1a] pr-3">{item.label}</span>
                   <AccordionChevron open={isOpen} />
                 </button>
 
                 {isOpen && (
-                  <div className="px-5 pb-5 bg-white">
-                    <p className="text-[14px] text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
+                  <div className="px-4 sm:px-5 pb-4 sm:pb-5 bg-white">
+                    <p className="text-[13px] sm:text-[14px] text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
                       {item.content}
                     </p>
                   </div>
@@ -743,43 +784,43 @@ function PatientStoriesSection() {
   const nextStory = patientStories[(current + 1) % total];
 
   return (
-    <section className="w-full bg-white py-14 px-4 overflow-hidden">
-      <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-10 items-start">
-        <div className="w-full lg:w-[220px] flex-shrink-0 flex flex-col gap-6 pt-10">
-          <h2 className="text-2xl font-bold text-[#1a1a1a] leading-snug">
+    <section className="w-full bg-white py-10 sm:py-14 px-3 sm:px-4 overflow-hidden">
+      <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
+        <div className="w-full lg:w-[220px] flex-shrink-0 flex flex-col gap-4 sm:gap-6 lg:pt-10">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] leading-snug">
             Our Patient&apos;s Stories
           </h2>
-          <a
-            href="#"
-            className="inline-flex items-center justify-center w-[140px] border-2 border-[#e07060] text-[#e07060] font-semibold text-[14px] rounded px-5 py-2.5 hover:bg-[#fdf4f3] transition-colors"
+          <Link
+            href="/patient-stories"
+            className="inline-flex items-center justify-center w-[120px] sm:w-[140px] border-2 border-[#e07060] text-[#e07060] font-semibold text-[13px] sm:text-[14px] rounded px-4 sm:px-5 py-2 sm:py-2.5 hover:bg-[#fdf4f3] transition-colors"
           >
             View all
-          </a>
+          </Link>
         </div>
 
-        <div className="flex-1 flex flex-col gap-4 min-w-0">
+        <div className="flex-1 w-full flex flex-col gap-4 min-w-0">
           <div className="flex items-center gap-3 justify-center">
-            <button onClick={prev} aria-label="Previous story" className="w-9 h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
-              <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <button onClick={prev} aria-label="Previous story" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            <button onClick={next} aria-label="Next story" className="w-9 h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
-              <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <button onClick={next} aria-label="Next story" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
 
-          <div className="flex gap-5 items-stretch">
-            <div className="flex-1 min-w-0 relative bg-white border border-gray-200 rounded-2xl shadow-sm p-6 flex flex-col justify-between" style={{ minHeight: 300 }}>
-              <div className="absolute top-5 left-5 text-[64px] leading-none text-[#f0b8b0] font-serif select-none" aria-hidden="true">
+          <div className="flex gap-4 sm:gap-5 items-stretch">
+            <div className="flex-1 min-w-0 relative bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-6 flex flex-col justify-between" style={{ minHeight: 280 }}>
+              <div className="absolute top-4 left-4 sm:top-5 sm:left-5 text-[48px] sm:text-[64px] leading-none text-[#f0b8b0] font-serif select-none" aria-hidden="true">
                 &ldquo;
               </div>
 
-              <div className="flex gap-6 items-start pt-4">
-                <div className="flex-shrink-0 flex flex-col items-center gap-1" style={{ width: 130 }}>
-                  <div className="relative" style={{ width: 120, height: 120 }}>
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start pt-4">
+                <div className="flex-shrink-0 flex flex-col items-center gap-1 mx-auto sm:mx-0" style={{ width: 110 }}>
+                  <div className="relative" style={{ width: 100, height: 100 }}>
                     <svg viewBox="0 0 120 120" className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
                       <path d="M60 5 C82 5, 110 22, 115 50 C120 78, 100 112, 70 116 C40 120, 8 102, 5 72 C2 42, 20 5, 60 5Z" fill="#f8d8d2" />
                     </svg>
@@ -787,20 +828,20 @@ function PatientStoriesSection() {
                       <Image src={story.image} alt={`Patient ${story.name}`} fill className="object-cover object-center" />
                     </div>
                   </div>
-                  <div className="bg-[#2eaa5e] text-white text-[10px] font-semibold text-center px-3 py-1 rounded-sm leading-tight -mt-3 relative z-10 w-full max-w-[110px]">
-                    <span className="block text-[9px] font-normal opacity-80">Patient</span>
+                  <div className="bg-[#2eaa5e] text-white text-[9px] sm:text-[10px] font-semibold text-center px-2 sm:px-3 py-1 rounded-sm leading-tight -mt-3 relative z-10 w-full max-w-[100px] sm:max-w-[110px]">
+                    <span className="block text-[8px] sm:text-[9px] font-normal opacity-80">Patient</span>
                     {story.name}
                   </div>
                 </div>
 
-                <p className="flex-1 text-[14px] text-gray-700 leading-relaxed pt-2">
+                <p className="flex-1 text-[13px] sm:text-[14px] text-gray-700 leading-relaxed sm:pt-2">
                   {story.text}
                 </p>
               </div>
 
-              <div className="flex items-end justify-between mt-5">
-                <p className="text-[13px] text-gray-400 font-medium">{story.hospital}</p>
-                <div className="text-[64px] leading-none text-[#f0b8b0] font-serif select-none" aria-hidden="true">
+              <div className="flex items-end justify-between mt-4 sm:mt-5">
+                <p className="text-[12px] sm:text-[13px] text-gray-400 font-medium">{story.hospital}</p>
+                <div className="text-[48px] sm:text-[64px] leading-none text-[#f0b8b0] font-serif select-none" aria-hidden="true">
                   &rdquo;
                 </div>
               </div>
@@ -831,13 +872,13 @@ function PatientStoriesSection() {
           </div>
 
           <div className="flex items-center gap-3 justify-center">
-            <button onClick={prev} aria-label="Previous story" className="w-9 h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
-              <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <button onClick={prev} aria-label="Previous story" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            <button onClick={next} aria-label="Next story" className="w-9 h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
-              <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <button onClick={next} aria-label="Next story" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
@@ -852,33 +893,33 @@ function PatientStoriesSection() {
 
 function ContactSection() {
   return (
-    <section id="contact" className="w-full bg-[#f8fbfc] py-14 px-4 border-t border-gray-100">
+    <section id="contact" className="w-full bg-[#f8fbfc] py-10 sm:py-14 px-3 sm:px-4 border-t border-gray-100">
       <div className="max-w-[1200px] mx-auto">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-[#1a3a5c] mb-3">Contact Sant Haridas Hospital</h2>
-          <p className="text-gray-600 text-[15px] max-w-2xl mx-auto">
+        <div className="text-center mb-8 sm:mb-10">
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#1a3a5c] mb-3">Contact Sant Haridas Hospital</h2>
+          <p className="text-gray-600 text-[14px] sm:text-[15px] max-w-2xl mx-auto">
             Reach out to us for appointments, enquiries, or emergency assistance. Our team is available 24/7 to serve you.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
 
           {/* Phone */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#1a9fa8]/10 flex items-center justify-center">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 flex flex-col gap-4">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#1a9fa8]/10 flex items-center justify-center">
               <PhoneIcon color="#1a9fa8" />
             </div>
-            <h3 className="text-[16px] font-bold text-[#1a3a5c]">Call Us</h3>
-            <div className="flex flex-col gap-2 text-[14px] text-gray-700">
+            <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1a3a5c]">Call Us</h3>
+            <div className="flex flex-col gap-2 text-[13px] sm:text-[14px] text-gray-700">
               <a href="tel:+919540740947" className="hover:text-[#1a9fa8] transition-colors">
-                <span className="text-gray-500 text-[12px] block">Primary Phone</span>
+                <span className="text-gray-500 text-[11px] sm:text-[12px] block">Primary Phone</span>
                 +91 95407 40947
               </a>
               <a href="tel:+919868053854" className="hover:text-[#1a9fa8] transition-colors">
-                <span className="text-gray-500 text-[12px] block">Mobile</span>
+                <span className="text-gray-500 text-[11px] sm:text-[12px] block">Mobile</span>
                 +91 98680 53854
               </a>
-              <a href="https://wa.me/919415057201" className="hover:text-[#1a9fa8] transition-colors flex items-center gap-1.5">
+              <a href="https://wa.me/919415057201" target="_blank" rel="noopener noreferrer" className="hover:text-[#1a9fa8] transition-colors flex items-center gap-1.5">
                 <WhatsAppIcon />
                 <span>+91 94150 57201 (WhatsApp)</span>
               </a>
@@ -886,12 +927,12 @@ function ContactSection() {
           </div>
 
           {/* Email */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#1a9fa8]/10 flex items-center justify-center">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 flex flex-col gap-4">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#1a9fa8]/10 flex items-center justify-center">
               <EmailIcon color="#1a9fa8" />
             </div>
-            <h3 className="text-[16px] font-bold text-[#1a3a5c]">Email Us</h3>
-            <div className="text-[14px] text-gray-700">
+            <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1a3a5c]">Email Us</h3>
+            <div className="text-[13px] sm:text-[14px] text-gray-700">
               <a href="mailto:santharidashospital@gmail.com" className="hover:text-[#1a9fa8] transition-colors break-all">
                 santharidashospital@gmail.com
               </a>
@@ -899,12 +940,12 @@ function ContactSection() {
           </div>
 
           {/* Address */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#1a9fa8]/10 flex items-center justify-center">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#1a9fa8]/10 flex items-center justify-center">
               <LocationIcon color="#1a9fa8" />
             </div>
-            <h3 className="text-[16px] font-bold text-[#1a3a5c]">Visit Us</h3>
-            <p className="text-[14px] text-gray-700 leading-relaxed">
+            <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1a3a5c]">Visit Us</h3>
+            <p className="text-[13px] sm:text-[14px] text-gray-700 leading-relaxed">
               Main, Nangloi – Najafgarh Road,<br />
               Ram Nagar, Najafgarh,<br />
               Delhi – 110043, India
@@ -914,7 +955,7 @@ function ContactSection() {
         </div>
 
         {/* Conflict note */}
-        <p className="mt-8 text-center text-[12px] text-gray-400 italic max-w-3xl mx-auto">
+        <p className="mt-6 sm:mt-8 text-center text-[11px] sm:text-[12px] text-gray-400 italic max-w-3xl mx-auto">
           Note: The page contains conflicting contact details in a few places. The WhatsApp/Call button points to +91 94150 57201, while the main contact section lists +91 98680 53854.
         </p>
       </div>
@@ -927,9 +968,9 @@ function ContactSection() {
 const socialLinks = [
   {
     label: "Instagram",
-    href: "#",
+    href: "https://www.instagram.com/",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="2" width="20" height="20" rx="6" stroke="url(#ig)" strokeWidth="1.8" />
         <circle cx="12" cy="12" r="4.5" stroke="url(#ig)" strokeWidth="1.8" />
         <circle cx="17.5" cy="6.5" r="1" fill="url(#ig)" />
@@ -947,27 +988,27 @@ const socialLinks = [
   },
   {
     label: "Facebook",
-    href: "#",
+    href: "https://www.facebook.com/",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <path d="M17 2h-3a5 5 0 00-5 5v3H6v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" stroke="#1877f2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
   {
     label: "X (Twitter)",
-    href: "#",
+    href: "https://twitter.com/",
     icon: (
-      <svg viewBox="0 0 24 24" fill="#000" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 24 24" fill="#000" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <path d="M4 4l16 16M4 20L20 4" stroke="#000" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
   },
   {
     label: "YouTube",
-    href: "#",
+    href: "https://www.youtube.com/",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="5" width="20" height="14" rx="4" stroke="#ff0000" strokeWidth="1.8" />
         <path d="M10 9l5 3-5 3V9z" fill="#ff0000" />
       </svg>
@@ -979,12 +1020,12 @@ function Footer() {
   return (
     <footer className="w-full bg-[#f0faf5] border-t border-gray-200">
       {/* Map strip */}
-      <div className="w-full" style={{ height: 200 }}>
+      <div className="w-full" style={{ height: 180 }}>
         <iframe
           title="Sant Haridas Hospital Location Map"
           src="https://www.google.com/maps?q=Ram+Nagar,+Najafgarh,+Delhi+110043&output=embed"
           width="100%"
-          height="200"
+          height="180"
           style={{ border: 0, display: "block" }}
           allowFullScreen
           loading="lazy"
@@ -993,42 +1034,44 @@ function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="max-w-[1200px] mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-[1200px] mx-auto px-3 sm:px-4 py-5 flex flex-col lg:flex-row items-center justify-between gap-5 lg:gap-4">
         <div className="flex items-center gap-2 flex-shrink-0">
           <img
             src="https://res.cloudinary.com/df01whs60/image/upload/v1785656956/Sant_haridas_hospital_logo_page-0001_vu9ssi.jpg"
             alt="Sant Haridas Hospital"
-            className="h-10 w-auto object-contain"
+            className="h-8 sm:h-10 w-auto object-contain"
           />
         </div>
 
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-[11px] font-bold tracking-widest text-[#1a3a5c] uppercase">Stay in Touch</p>
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col items-center gap-3 order-last lg:order-none">
+          <p className="text-[10px] sm:text-[11px] font-bold tracking-widest text-[#1a3a5c] uppercase">Stay in Touch</p>
+          <div className="flex items-center gap-2 sm:gap-3">
             {socialLinks.map((s) => (
               <a
                 key={s.label}
                 href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label={s.label}
-                className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center hover:shadow-md transition-shadow"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center hover:shadow-md transition-shadow"
               >
                 {s.icon}
               </a>
             ))}
           </div>
-          <p className="text-[12px] text-gray-500">
+          <p className="text-[11px] sm:text-[12px] text-gray-500 text-center">
             &copy; {new Date().getFullYear()} Sant Haridas Hospital. All Rights Reserved.
           </p>
         </div>
 
-        <div className="flex flex-col items-end gap-1.5 text-right">
-          <p className="text-[12px] font-semibold text-[#1a3a5c]">24/7 Emergency Helpline</p>
-          <a href="tel:+919540740947" className="text-[15px] font-bold text-[#1a9fa8] hover:text-[#1a3a5c] transition-colors">
+        <div className="flex flex-col items-center lg:items-end gap-1.5 text-center lg:text-right">
+          <p className="text-[11px] sm:text-[12px] font-semibold text-[#1a3a5c]">Emergency Helpline</p>
+          <a href="tel:+919540740947" className="text-[14px] sm:text-[15px] font-bold text-[#1a9fa8] hover:text-[#1a3a5c] transition-colors">
             +91 95407 40947
           </a>
-          <a
+          <Link
             href="#contact"
-            className="mt-1 inline-flex items-center gap-1.5 bg-[#1a3a5c] text-white text-[12px] font-semibold px-4 py-2 rounded hover:bg-[#122b47] transition-colors"
+            className="mt-1 inline-flex items-center gap-1.5 bg-[#1a3a5c] text-white text-[11px] sm:text-[12px] font-semibold px-4 py-2 rounded hover:bg-[#122b47] transition-colors"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
@@ -1037,7 +1080,7 @@ function Footer() {
               <circle cx="8" cy="9.5" r="1" fill="currentColor" />
             </svg>
             Book an Appointment
-          </a>
+          </Link>
         </div>
       </div>
     </footer>
