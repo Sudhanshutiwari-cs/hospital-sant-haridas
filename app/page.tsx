@@ -176,7 +176,7 @@ const mainNavItems = [
   { label: "Services", href: "/services" },
   { label: "Blogs", href: "/blogs" },
   { label: "About Us", href: "/about" },
-  { label: "Contact Us", href: "#contact" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 // ── Top Bar ─────────────────────────────────────────────────────────────────
@@ -235,7 +235,7 @@ function MainNav() {
 
         <div className="flex items-center gap-2 sm:gap-4">
           <Link
-            href="#contact"
+            href="/contact"
             className="hidden sm:inline-block bg-[#e85d26] hover:bg-[#d14e1c] text-white font-semibold text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 rounded transition-colors whitespace-nowrap"
           >
             Book Appointment
@@ -268,7 +268,7 @@ function MainNav() {
               </Link>
             ))}
             <Link
-              href="#contact"
+              href="/contact"
               onClick={() => setMobileOpen(false)}
               className="mt-3 mb-2 bg-[#e85d26] hover:bg-[#d14e1c] text-white font-semibold text-sm px-5 py-2.5 rounded transition-colors text-center"
             >
@@ -481,7 +481,7 @@ function ServicesSection() {
               {medicalServices.map((s) => (
                 <Link
                   key={s.name}
-                  href="#contact"
+                  href="/contact"
                   className="flex items-center gap-3 sm:gap-4 group"
                 >
                   <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 flex items-center justify-center">
@@ -508,7 +508,7 @@ function ServicesSection() {
           )}
 
           <Link
-            href="#contact"
+            href="/contact"
             className="inline-flex items-center gap-1 mt-6 sm:mt-8 text-[#1a3a5c] font-semibold text-[14px] sm:text-[15px] hover:text-[#1a9fa8] transition-colors"
           >
             Book a Consultation
@@ -527,7 +527,7 @@ function ServicesSection() {
                 Sant Haridas Hospital is home to experienced doctors<br className="hidden sm:block" />across multiple medical disciplines.
               </p>
               <Link
-                href="#contact"
+                href="/contact"
                 className="inline-flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122b47] text-white font-semibold text-[14px] sm:text-[15px] px-5 sm:px-6 py-2.5 sm:py-3 rounded transition-colors"
               >
                 Contact Us
@@ -898,7 +898,7 @@ function ContactSection() {
         <div className="text-center mb-8 sm:mb-10">
           <h2 className="text-2xl sm:text-3xl font-bold text-[#1a3a5c] mb-3">Contact Sant Haridas Hospital</h2>
           <p className="text-gray-600 text-[14px] sm:text-[15px] max-w-2xl mx-auto">
-            Reach out to us for appointments, enquiries, or emergency assistance. Our team is available 24/7 to serve you.
+            Reach out to us for appointments, enquiries, or emergency assistance. Our team is available to serve you.
           </p>
         </div>
 
@@ -968,7 +968,7 @@ function ContactSection() {
 const socialLinks = [
   {
     label: "Instagram",
-    href: "https://www.instagram.com/",
+    href: "https://www.instagram.com/santharidashospital?stkn=MWN5bDAycm9qc2Zqag==",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="2" width="20" height="20" rx="6" stroke="url(#ig)" strokeWidth="1.8" />
@@ -988,7 +988,7 @@ const socialLinks = [
   },
   {
     label: "Facebook",
-    href: "https://www.facebook.com/",
+    href: "https://www.facebook.com/100090027224112/",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <path d="M17 2h-3a5 5 0 00-5 5v3H6v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" stroke="#1877f2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -1006,7 +1006,7 @@ const socialLinks = [
   },
   {
     label: "YouTube",
-    href: "https://www.youtube.com/",
+    href: "http://www.youtube.com/@SantHaridashospital",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="5" width="20" height="14" rx="4" stroke="#ff0000" strokeWidth="1.8" />
@@ -1023,7 +1023,7 @@ function Footer() {
       <div className="w-full" style={{ height: 180 }}>
         <iframe
           title="Sant Haridas Hospital Location Map"
-          src="https://www.google.com/maps?q=Ram+Nagar,+Najafgarh,+Delhi+110043&output=embed"
+          src="https://www.google.com/maps?q=Sant+Haridas+Hospital,+Ram+Nagar,+Najafgarh,+Delhi+110043&output=embed"
           width="100%"
           height="180"
           style={{ border: 0, display: "block" }}
@@ -1070,7 +1070,7 @@ function Footer() {
             +91 95407 40947
           </a>
           <Link
-            href="#contact"
+            href="/contact"
             className="mt-1 inline-flex items-center gap-1.5 bg-[#1a3a5c] text-white text-[11px] sm:text-[12px] font-semibold px-4 py-2 rounded hover:bg-[#122b47] transition-colors"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
