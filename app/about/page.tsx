@@ -2,33 +2,38 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 // ── Top Bar ───────────────────────────────────────────────────────────────────
 
 function TopBar() {
   return (
-    <div className="w-full bg-[#1a9fa8] text-white text-[13px]">
-      <div className="max-w-[1200px] mx-auto px-4 h-10 flex items-center justify-between">
-        <div className="flex items-center gap-6"></div>
-        <div className="flex items-center gap-4">
+    <div className="w-full bg-[#1a9fa8] text-white text-[11px] sm:text-[13px]">
+      <div className="max-w-[1200px] mx-auto px-3 sm:px-4 h-9 sm:h-10 flex items-center justify-center sm:justify-between">
+        <div className="hidden sm:flex items-center gap-6"></div>
+        <div className="flex items-center gap-3 sm:gap-4">
           <a
             href="https://wa.me/919415057201"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-1.5 hover:text-white/80 transition-colors"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
               <path d="M11.998 2C6.477 2 2 6.477 2 12c0 1.82.487 3.53 1.338 5.01L2 22l5.118-1.318C8.578 21.527 10.248 22 11.998 22 17.523 22 22 17.523 22 12S17.523 2 11.998 2z" />
             </svg>
-            WhatsApp Us (24/7)
+            <span className="hidden xs:inline">WhatsApp Us</span>
+            <span className="xs:hidden">WhatsApp</span>
           </a>
           <a
             href="tel:+919540740947"
             className="flex items-center gap-1.5 hover:text-white/80 transition-colors"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.02 2.22 2 2 0 012 .04h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            +91 95407 40947
+            <span className="hidden sm:inline">+91 95407 40947</span>
+            <span className="sm:hidden">Call</span>
           </a>
         </div>
       </div>
@@ -38,58 +43,102 @@ function TopBar() {
 
 // ── Main Nav ──────────────────────────────────────────────────────────────────
 
-const navItems = ["Doctors", "Services", "Blogs", "About Us", "Contact Us"];
+const navItems = [
+  { label: "Doctors", href: "/doctors" },
+  { label: "Services", href: "/services" },
+  { label: "Blogs", href: "/blogs" },
+  { label: "About Us", href: "/about" },
+  { label: "Contact Us", href: "/contact" },
+];
+
+function MenuIcon({ open }: { open: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-[#1a3a5c]">
+      {open ? (
+        <path d="M6 6l12 12M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      ) : (
+        <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      )}
+    </svg>
+  );
+}
 
 function MainNav() {
-  const getNavLink = (item: string): string => {
-    switch (item) {
-      case "Doctors":
-        return "/doctors";
-      case "Services":
-        return "/services";
-      case "Blogs":
-        return "/blogs";
-      case "About Us":
-        return "/about";
-      case "Contact Us":
-        return "#contact";
-      default:
-        return "#";
-    }
-  };
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <header className="w-full bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-      <div className="max-w-[1200px] mx-auto px-4 h-16 flex items-center justify-between gap-6">
-        <a href="/" className="flex items-center flex-shrink-0">
+      <div className="max-w-[1200px] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-3 sm:gap-6">
+        <Link href="/" className="flex items-center flex-shrink-0">
           <img
             src="https://res.cloudinary.com/df01whs60/image/upload/v1785656956/Sant_haridas_hospital_logo_page-0001_vu9ssi.jpg"
             alt="Sant Haridas Hospital"
-            className="h-12 w-auto object-contain"
+            className="h-9 sm:h-10 md:h-12 w-auto object-contain"
           />
-        </a>
+        </Link>
 
-        <nav className="hidden md:flex items-center gap-6">
+        {/* Desktop nav */}
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
           {navItems.map((item) => (
-            <a
-              key={item}
-              href={getNavLink(item)}
-              className="text-[14px] font-medium text-[#1a3a5c] hover:text-[#1a9fa8] transition-colors"
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`text-[14px] font-medium transition-colors ${
+                item.label === "About Us"
+                  ? "text-[#1a9fa8]"
+                  : "text-[#1a3a5c] hover:text-[#1a9fa8]"
+              }`}
             >
-              {item}
-            </a>
+              {item.label}
+            </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <a
-            href="#contact"
-            className="bg-[#e07030] hover:bg-[#c85f22] text-white text-[13px] font-semibold px-5 py-2.5 rounded transition-colors whitespace-nowrap"
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/contact"
+            className="hidden sm:inline-block bg-[#e07030] hover:bg-[#c85f22] text-white text-[12px] sm:text-[13px] font-semibold px-3 sm:px-5 py-2 sm:py-2.5 rounded transition-colors whitespace-nowrap"
           >
-            Book an Appointment
-          </a>
+            Book Appointment
+          </Link>
+
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="lg:hidden p-2 -mr-1"
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+          >
+            <MenuIcon open={mobileOpen} />
+          </button>
         </div>
       </div>
+
+      {/* Mobile nav */}
+      {mobileOpen && (
+        <nav className="lg:hidden bg-white border-t border-gray-100 shadow-md">
+          <div className="max-w-[1200px] mx-auto px-3 sm:px-4 py-2 flex flex-col">
+            {navItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className={`py-3 px-2 text-[15px] font-semibold hover:text-[#1a9fa8] border-b border-gray-50 last:border-0 transition-colors ${
+                  item.label === "About Us" ? "text-[#1a9fa8]" : "text-[#1a3a5c]"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              href="/contact"
+              onClick={() => setMobileOpen(false)}
+              className="mt-3 mb-2 bg-[#e07030] hover:bg-[#c85f22] text-white font-semibold text-sm px-5 py-2.5 rounded transition-colors text-center"
+            >
+              Book an Appointment
+            </Link>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
@@ -98,10 +147,26 @@ function MainNav() {
 
 function AboutHeroBanner() {
   const diamonds = [
-    { src: "/about-hero-1.png", alt: "Doctor with tablet", x: 42, y: 3, size: 52 },
-    { src: "/about-hero-2.png", alt: "Doctor on laptop", x: 52, y: 23, size: 56 },
-    { src: "/about-hero-3.png", alt: "Doctor with stethoscope", x: 72, y: 5, size: 48 },
-    { src: "/about-hero-4.png", alt: "Medical team", x: 80, y: 30, size: 44 },
+    {
+      src: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=400&q=80",
+      alt: "Doctor with tablet",
+      x: 42, y: 3, size: 52,
+    },
+    {
+      src: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&w=400&q=80",
+      alt: "Doctor on laptop",
+      x: 52, y: 23, size: 56,
+    },
+    {
+      src: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=400&q=80",
+      alt: "Doctor with stethoscope",
+      x: 72, y: 5, size: 48,
+    },
+    {
+      src: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&w=400&q=80",
+      alt: "Medical team",
+      x: 80, y: 30, size: 44,
+    },
   ];
 
   return (
@@ -112,7 +177,7 @@ function AboutHeroBanner() {
         {diamonds.map((d, i) => (
           <div
             key={i}
-            className="absolute overflow-hidden"
+            className="absolute overflow-hidden hidden sm:block"
             style={{
               width: `${d.size * 0.9}%`,
               aspectRatio: "1",
@@ -130,7 +195,7 @@ function AboutHeroBanner() {
                 transformOrigin: "center",
               }}
             >
-              <Image src={d.src} alt={d.alt} fill className="object-cover" />
+              <Image src={d.src} alt={d.alt} fill className="object-cover" unoptimized />
             </div>
           </div>
         ))}
@@ -141,7 +206,7 @@ function AboutHeroBanner() {
         ].map((pos, i) => (
           <svg
             key={i}
-            className="absolute text-white/80"
+            className="absolute text-white/80 hidden sm:block"
             style={{ left: `${pos.x}%`, top: `${pos.y}%`, width: 18, height: 18 }}
             viewBox="0 0 18 18"
             fill="none"
@@ -151,10 +216,10 @@ function AboutHeroBanner() {
         ))}
       </div>
 
-      <div className="relative z-20 h-full flex flex-col justify-center px-10 max-w-[480px]">
-        <div className="bg-white/80 backdrop-blur-sm rounded-lg px-6 py-5 shadow-sm">
-          <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">Sant Haridas Hospital</h1>
-          <p className="text-[14px] text-gray-600">
+      <div className="relative z-20 h-full flex flex-col justify-center px-4 sm:px-10 max-w-[520px]">
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg px-5 sm:px-6 py-4 sm:py-5 shadow-sm">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-2">Sant Haridas Hospital</h1>
+          <p className="text-[13px] sm:text-[14px] text-gray-600">
             Compassionate Multi-Speciality Healthcare in Najafgarh, Delhi
           </p>
         </div>
@@ -167,28 +232,28 @@ function AboutHeroBanner() {
 
 function FounderSection() {
   return (
-    <section className="w-full py-12 px-4 bg-white">
+    <section className="w-full py-10 sm:py-12 px-3 sm:px-4 bg-white">
       <div className="max-w-[1200px] mx-auto">
-        <div className="flex flex-col md:flex-row items-center gap-8">
-          <div className="relative w-72 h-72 md:w-80 md:h-80 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center border-4 border-[#1a9fa8]/20">
+        <div className="flex flex-col md:flex-row items-center gap-6 sm:gap-8">
+          <div className="relative w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center border-4 border-[#1a9fa8]/20 flex-shrink-0">
             <div className="flex flex-col items-center gap-3">
-              <svg className="w-24 h-24 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-16 h-16 sm:w-24 sm:h-24 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="9" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M3 20c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 <circle cx="17" cy="9" r="3" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M12 20c0-2.761 1.567-5.143 3.836-6.228" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 <path d="M13.5 11.5c0-1.5 1-2.5 2.5-2.5s2.5 1 2.5 2.5c0 2-2.5 3.5-2.5 3.5s-2.5-1.5-2.5-3.5z" fill="currentColor" opacity="0.3" />
               </svg>
-              <p className="text-sm text-gray-500 font-medium">Founder Couple Image</p>
-              <p className="text-xs text-gray-400">(Placeholder)</p>
+              <p className="text-[12px] sm:text-sm text-gray-500 font-medium">Founder Couple Image</p>
+              <p className="text-[10px] sm:text-xs text-gray-400">(Placeholder)</p>
             </div>
           </div>
 
           <div className="flex-1 text-center md:text-left">
-            <h2 className="text-2xl font-bold text-[#1a1a1a] mb-3">Our Founders</h2>
-            <p className="text-[14px] text-gray-600 leading-relaxed">
-              [Founder couple names and description will go here. This section is dedicated 
-              to the visionary couple who together established Sant Haridas Hospital with 
+            <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-3">Our Founders</h2>
+            <p className="text-[13px] sm:text-[14px] text-gray-600 leading-relaxed">
+              [Founder couple names and description will go here. This section is dedicated
+              to the visionary couple who together established Sant Haridas Hospital with
               a mission to provide world-class healthcare services to the community.]
             </p>
           </div>
@@ -202,10 +267,10 @@ function FounderSection() {
 
 function AboutUsText() {
   return (
-    <section className="w-full bg-white py-8 px-4">
+    <section className="w-full bg-white py-8 px-3 sm:px-4">
       <div className="max-w-[1200px] mx-auto">
-        <h2 className="text-2xl font-bold text-[#1a1a1a] mb-4">About Us</h2>
-        <div className="text-[14px] text-gray-700 leading-relaxed max-w-[900px] space-y-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">About Us</h2>
+        <div className="text-[13px] sm:text-[14px] text-gray-700 leading-relaxed max-w-[900px] space-y-4">
           <p>
             <strong>Sant Haridas Hospital</strong> is a multi-speciality healthcare facility
             located at Main, Nangloi – Najafgarh Road, Ram Nagar, Najafgarh, Delhi – 110043.
@@ -235,7 +300,7 @@ function AboutUsText() {
 
 function VisionIcon() {
   return (
-    <svg viewBox="0 0 64 64" fill="none" className="w-14 h-14" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 64 64" fill="none" className="w-12 h-12 sm:w-14 sm:h-14" xmlns="http://www.w3.org/2000/svg">
       <circle cx="32" cy="32" r="22" stroke="#8b6fb5" strokeWidth="1.8" />
       <circle cx="32" cy="32" r="14" stroke="#8b6fb5" strokeWidth="1.5" />
       <circle cx="32" cy="32" r="6" stroke="#8b6fb5" strokeWidth="1.5" />
@@ -247,7 +312,7 @@ function VisionIcon() {
 
 function MissionIcon() {
   return (
-    <svg viewBox="0 0 64 64" fill="none" className="w-14 h-14" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 64 64" fill="none" className="w-12 h-12 sm:w-14 sm:h-14" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 38 C12 34, 14 30, 18 29 L26 28 C28 27.5, 30 28, 30 30 L30 34" stroke="#b07ac8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M30 34 L44 34 C46 34, 48 36, 46 38 L36 42 C32 44, 26 44, 22 42 L12 38" stroke="#b07ac8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M34 34 L34 30 C34 28, 36 27, 38 28 L38 34" stroke="#b07ac8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -277,17 +342,17 @@ function VisionMissionSection() {
   ];
 
   return (
-    <section className="w-full bg-[#fafafa] py-12 px-4">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+    <section className="w-full bg-[#fafafa] py-10 sm:py-12 px-3 sm:px-4">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
         {cards.map((card) => (
           <div
             key={card.title}
-            className="bg-white border border-gray-200 rounded-2xl flex flex-col items-center text-center px-10 py-10 shadow-sm"
+            className="bg-white border border-gray-200 rounded-2xl flex flex-col items-center text-center px-6 sm:px-10 py-8 sm:py-10 shadow-sm"
           >
             <div className="mb-4">{card.icon}</div>
-            <h3 className="text-[17px] font-bold text-[#7c55b0] mb-5">{card.title}</h3>
+            <h3 className="text-[16px] sm:text-[17px] font-bold text-[#7c55b0] mb-5">{card.title}</h3>
             <div className="w-10 h-[2px] bg-gray-200 mb-5" />
-            <p className="text-[14px] text-gray-600 leading-relaxed max-w-[360px]">
+            <p className="text-[13px] sm:text-[14px] text-gray-600 leading-relaxed max-w-[360px]">
               {card.text}
             </p>
           </div>
@@ -301,7 +366,7 @@ function VisionMissionSection() {
 
 function PatientCentricityIcon() {
   return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-14 h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 56 56" fill="none" className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
       <circle cx="28" cy="16" r="5" stroke="#8b6fb5" strokeWidth="1.8" />
       <circle cx="14" cy="20" r="4" stroke="#b07ac8" strokeWidth="1.6" />
       <circle cx="42" cy="20" r="4" stroke="#b07ac8" strokeWidth="1.6" />
@@ -318,7 +383,7 @@ function PatientCentricityIcon() {
 
 function IntegrityIcon() {
   return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-14 h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 56 56" fill="none" className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
       <rect x="16" y="8" width="24" height="28" rx="3" stroke="#8b6fb5" strokeWidth="1.8" />
       <path d="M22 16h12M22 21h12M22 26h8" stroke="#b07ac8" strokeWidth="1.4" strokeLinecap="round" />
       <circle cx="34" cy="30" r="6" fill="white" stroke="#8b6fb5" strokeWidth="1.5" />
@@ -331,7 +396,7 @@ function IntegrityIcon() {
 
 function TeamworkIcon() {
   return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-14 h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 56 56" fill="none" className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
       <circle cx="16" cy="18" r="5" stroke="#8b6fb5" strokeWidth="1.8" />
       <circle cx="40" cy="18" r="5" stroke="#8b6fb5" strokeWidth="1.8" />
       <circle cx="28" cy="14" r="6" stroke="#8b6fb5" strokeWidth="1.8" />
@@ -346,7 +411,7 @@ function TeamworkIcon() {
 
 function OwnershipIcon() {
   return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-14 h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 56 56" fill="none" className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
       <circle cx="28" cy="14" r="6" stroke="#8b6fb5" strokeWidth="1.8" />
       <path d="M28 20 L28 38" stroke="#8b6fb5" strokeWidth="2" strokeLinecap="round" />
       <path d="M18 28 L28 24 L38 28" stroke="#8b6fb5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -360,7 +425,7 @@ function OwnershipIcon() {
 
 function InnovationIcon() {
   return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-14 h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 56 56" fill="none" className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
       <path d="M28 10 C20 10, 16 16, 16 22 C16 27, 19 30, 22 33 L22 38 L34 38 L34 33 C37 30, 40 27, 40 22 C40 16, 36 10, 28 10 Z" stroke="#8b6fb5" strokeWidth="1.8" strokeLinejoin="round" />
       <path d="M22 38h12M23 42h10M25 46h6" stroke="#8b6fb5" strokeWidth="1.5" strokeLinecap="round" />
       <circle cx="28" cy="24" r="5" stroke="#b07ac8" strokeWidth="1.4" />
@@ -385,7 +450,7 @@ function InnovationIcon() {
 
 function ExcellenceIcon() {
   return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-14 h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 56 56" fill="none" className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
       <path d="M20 10 L36 10 L36 28 C36 34, 32 38, 28 38 C24 38, 20 34, 20 28 Z" stroke="#8b6fb5" strokeWidth="1.8" strokeLinejoin="round" />
       <path d="M20 14 C14 14, 12 18, 12 22 C12 26, 15 28, 20 28" stroke="#b07ac8" strokeWidth="1.6" strokeLinecap="round" />
       <path d="M36 14 C42 14, 44 18, 44 22 C44 26, 41 28, 36 28" stroke="#b07ac8" strokeWidth="1.6" strokeLinecap="round" />
@@ -469,16 +534,16 @@ const values: ValueItem[] = [
 
 function ValueCard({ value }: { value: ValueItem }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-6 py-7 flex flex-col gap-5">
-      <div className="flex items-center gap-4">
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-5 sm:px-6 py-6 sm:py-7 flex flex-col gap-5">
+      <div className="flex items-center gap-3 sm:gap-4">
         {value.icon}
-        <h3 className="text-[17px] font-bold text-[#1a1a1a]">{value.title}</h3>
+        <h3 className="text-[15px] sm:text-[17px] font-bold text-[#1a1a1a]">{value.title}</h3>
       </div>
       <ul className="flex flex-col gap-2.5">
         {value.points.map((pt, i) => (
           <li key={i} className="flex items-start gap-2">
             <ValueBullet />
-            <span className="text-[13px] leading-snug">
+            <span className="text-[12px] sm:text-[13px] leading-snug">
               <span className="text-[#1a6fa8] font-medium">{pt.highlight}</span>
               <span className="text-gray-600">{pt.rest}</span>
             </span>
@@ -491,10 +556,10 @@ function ValueCard({ value }: { value: ValueItem }) {
 
 function OurValuesSection() {
   return (
-    <section className="w-full bg-white py-12 px-4">
+    <section className="w-full bg-white py-10 sm:py-12 px-3 sm:px-4">
       <div className="max-w-[1200px] mx-auto">
-        <h2 className="text-2xl font-bold text-[#1a1a1a] mb-8">Our Values</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-6 sm:mb-8">Our Values</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {values.map((v) => (
             <ValueCard key={v.title} value={v} />
           ))}
@@ -536,7 +601,7 @@ const faqItems = [
 function AccordionChevron({ open }: { open: boolean }) {
   return (
     <svg
-      className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+      className={`w-5 h-5 text-gray-500 transition-transform duration-300 flex-shrink-0 ${open ? "rotate-180" : ""}`}
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -555,33 +620,34 @@ function FeelFreeSection() {
   }
 
   return (
-    <section className="w-full bg-white py-12 px-4">
-      <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-10 items-start">
+    <section className="w-full bg-white py-10 sm:py-12 px-3 sm:px-4">
+      <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
         <div className="w-full lg:w-[340px] flex-shrink-0">
-          <h2 className="text-2xl font-bold text-[#1a1a1a] mb-5">Feel Free to ask us</h2>
-          <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-            <div className="relative w-full" style={{ height: 240 }}>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4 sm:mb-5">Feel Free to ask us</h2>
+          <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm max-w-sm lg:max-w-none">
+            <div className="relative w-full" style={{ height: 200 }}>
               <Image
-                src="/faq-woman.png"
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"
                 alt="Woman in a thinking pose"
                 fill
                 className="object-cover object-top"
+                unoptimized
               />
             </div>
             <div className="px-4 py-3 bg-white">
-              <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-2.5 focus-within:border-[#1a9fa8] transition-colors">
+              <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 focus-within:border-[#1a9fa8] transition-colors">
                 <input
                   type="text"
                   placeholder="Ask your question"
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
-                  className="flex-1 text-[14px] text-gray-600 placeholder-gray-400 outline-none bg-transparent"
+                  className="flex-1 min-w-0 text-[13px] sm:text-[14px] text-gray-600 placeholder-gray-400 outline-none bg-transparent"
                 />
                 <button
                   aria-label="Submit question"
-                  className="w-7 h-7 rounded-full border-2 border-gray-300 hover:border-[#1a9fa8] flex items-center justify-center transition-colors flex-shrink-0"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-gray-300 hover:border-[#1a9fa8] flex items-center justify-center transition-colors flex-shrink-0"
                 >
-                  <svg className="w-3.5 h-3.5 text-gray-400" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
@@ -590,22 +656,22 @@ function FeelFreeSection() {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col gap-3 pt-[68px]">
+        <div className="flex-1 w-full flex flex-col gap-3 lg:pt-[68px]">
           {faqItems.map((item) => {
             const isOpen = openId === item.id;
             return (
               <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden">
                 <button
                   onClick={() => toggle(item.id)}
-                  className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left"
+                  className="w-full flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 bg-white hover:bg-gray-50 transition-colors text-left"
                   aria-expanded={isOpen}
                 >
-                  <span className="text-[15px] font-semibold text-[#1a1a1a]">{item.label}</span>
+                  <span className="text-[14px] sm:text-[15px] font-semibold text-[#1a1a1a] pr-3">{item.label}</span>
                   <AccordionChevron open={isOpen} />
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 bg-white">
-                    <p className="text-[14px] text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
+                  <div className="px-4 sm:px-5 pb-4 sm:pb-5 bg-white">
+                    <p className="text-[13px] sm:text-[14px] text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
                       {item.content}
                     </p>
                   </div>
@@ -624,9 +690,9 @@ function FeelFreeSection() {
 const aboutSocialLinks = [
   {
     label: "Instagram",
-    href: "#",
+    href: "https://www.instagram.com/santharidashospital?stkn=MWN5bDAycm9qc2Zqag==",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="2" width="20" height="20" rx="6" stroke="url(#ig-about)" strokeWidth="1.8" />
         <circle cx="12" cy="12" r="4.5" stroke="url(#ig-about)" strokeWidth="1.8" />
         <circle cx="17.5" cy="6.5" r="1" fill="url(#ig-about)" />
@@ -644,9 +710,9 @@ const aboutSocialLinks = [
   },
   {
     label: "Facebook",
-    href: "#",
+    href: "https://www.facebook.com/100090027224112/",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <path
           d="M17 2h-3a5 5 0 00-5 5v3H6v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"
           stroke="#1877f2"
@@ -661,16 +727,16 @@ const aboutSocialLinks = [
     label: "X (Twitter)",
     href: "#",
     icon: (
-      <svg viewBox="0 0 24 24" fill="#000" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 24 24" fill="#000" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <path d="M4 4l16 16M4 20L20 4" stroke="#000" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
   },
   {
     label: "YouTube",
-    href: "#",
+    href: "http://www.youtube.com/@SantHaridashospital",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="5" width="20" height="14" rx="4" stroke="#ff0000" strokeWidth="1.8" />
         <path d="M10 9l5 3-5 3V9z" fill="#ff0000" />
       </svg>
@@ -681,12 +747,12 @@ const aboutSocialLinks = [
 function AboutFooter() {
   return (
     <footer className="w-full bg-[#f0faf5] border-t border-gray-200">
-      <div className="w-full" style={{ height: 200 }}>
+      <div className="w-full" style={{ height: 180 }}>
         <iframe
           title="Sant Haridas Hospital Location Map"
-          src="https://www.google.com/maps?q=Ram+Nagar,+Najafgarh,+Delhi+110043&output=embed"
+          src="https://www.google.com/maps?q=Sant+Haridas+Hospital,+Ram+Nagar,+Najafgarh,+Delhi+110043&output=embed"
           width="100%"
-          height="200"
+          height="180"
           style={{ border: 0, display: "block" }}
           allowFullScreen
           loading="lazy"
@@ -694,42 +760,44 @@ function AboutFooter() {
         />
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-[1200px] mx-auto px-3 sm:px-4 py-5 flex flex-col lg:flex-row items-center justify-between gap-5 lg:gap-4">
         <div className="flex items-center gap-2 flex-shrink-0">
           <img
             src="https://res.cloudinary.com/df01whs60/image/upload/v1785656956/Sant_haridas_hospital_logo_page-0001_vu9ssi.jpg"
             alt="Sant Haridas Hospital"
-            className="h-10 w-auto object-contain"
+            className="h-8 sm:h-10 w-auto object-contain"
           />
         </div>
 
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-[11px] font-bold tracking-widest text-[#1a3a5c] uppercase">Stay in Touch</p>
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col items-center gap-3 order-last lg:order-none">
+          <p className="text-[10px] sm:text-[11px] font-bold tracking-widest text-[#1a3a5c] uppercase">Stay in Touch</p>
+          <div className="flex items-center gap-2 sm:gap-3">
             {aboutSocialLinks.map((s) => (
               <a
                 key={s.label}
                 href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label={s.label}
-                className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center hover:shadow-md transition-shadow"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center hover:shadow-md transition-shadow"
               >
                 {s.icon}
               </a>
             ))}
           </div>
-          <p className="text-[12px] text-gray-500">
+          <p className="text-[11px] sm:text-[12px] text-gray-500 text-center">
             &copy; {new Date().getFullYear()} Sant Haridas Hospital. All Rights Reserved.
           </p>
         </div>
 
-        <div className="flex flex-col items-end gap-1.5 text-right">
-          <p className="text-[12px] font-semibold text-[#1a3a5c]">24/7 Helpline</p>
-          <a href="tel:+919540740947" className="text-[15px] font-bold text-[#1a9fa8] hover:text-[#1a3a5c] transition-colors">
+        <div className="flex flex-col items-center lg:items-end gap-1.5 text-center lg:text-right">
+          <p className="text-[11px] sm:text-[12px] font-semibold text-[#1a3a5c]">Emergency Helpline</p>
+          <a href="tel:+919540740947" className="text-[14px] sm:text-[15px] font-bold text-[#1a9fa8] hover:text-[#1a3a5c] transition-colors">
             +91 95407 40947
           </a>
-          <a
-            href="#contact"
-            className="mt-1 inline-flex items-center gap-1.5 bg-[#1a3a5c] text-white text-[12px] font-semibold px-4 py-2 rounded hover:bg-[#122b47] transition-colors"
+          <Link
+            href="/contact"
+            className="mt-1 inline-flex items-center gap-1.5 bg-[#1a3a5c] text-white text-[11px] sm:text-[12px] font-semibold px-4 py-2 rounded hover:bg-[#122b47] transition-colors"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
@@ -738,7 +806,7 @@ function AboutFooter() {
               <circle cx="8" cy="9.5" r="1" fill="currentColor" />
             </svg>
             Book an Appointment
-          </a>
+          </Link>
         </div>
       </div>
     </footer>
