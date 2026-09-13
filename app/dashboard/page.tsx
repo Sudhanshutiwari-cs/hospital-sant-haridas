@@ -21,7 +21,6 @@ import {
   ArrowRight,
   ShieldCheck,
   Sparkles,
-  UserCheck,
   CreditCard,
 } from 'lucide-react';
 
@@ -477,7 +476,7 @@ export default function DashboardPage() {
         <div className="absolute -top-24 -right-24 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2.5">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-teal-500/20 text-teal-300 border border-teal-400/30">
@@ -494,31 +493,6 @@ export default function DashboardPage() {
             <p className="text-slate-300 text-sm max-w-2xl">
               Real-time monitor of patient consultations, medical staffing, doctor availability, and financial performance.
             </p>
-          </div>
-
-          {/* Quick Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Link
-              href="/dashboard/appointments/new"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold transition-all shadow-md hover:shadow-lg active:scale-[0.99]"
-            >
-              <Plus className="w-4 h-4" />
-              Book Appointment
-            </Link>
-            <Link
-              href="/dashboard/doctors/new"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-white text-sm font-semibold transition-all border border-slate-700 shadow-sm"
-            >
-              <Stethoscope className="w-4 h-4 text-teal-400" />
-              Add Doctor
-            </Link>
-            <Link
-              href="/dashboard/receptionists/new"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-white text-sm font-semibold transition-all border border-slate-700 shadow-sm"
-            >
-              <UserCheck className="w-4 h-4 text-indigo-300" />
-              Add Receptionist
-            </Link>
           </div>
         </div>
       </div>
