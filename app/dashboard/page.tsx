@@ -14,7 +14,8 @@ import {
   Activity,
   TrendingUp,
   Building2,
-  CalendarCheck
+  CalendarCheck,
+  IndianRupee,
 } from 'lucide-react';
 
 interface CurrentUser {
@@ -156,7 +157,20 @@ export default function DashboardPage() {
 
   if (!currentUser) return null;
 
-  // Calculate stats
+  // Calculate stats (revenue is only patients whose payment is complete / paid)
+  const paidAppointments = appointments.filter(
+    a => a.payment_status?.toLowerCase() === 'paid' || a.payment_status?.toLowerCase() === 'completed'
+  );
+
+  const totalRevenue = paidAppointments.reduce(
+    (sum, a) => sum + (Number(a.payment_amount) || 0),
+    0
+  );
+
+  const uniquePaidPatients = new Set(
+    paidAppointments.map(a => a.patient_id).filter(Boolean)
+  ).size;
+
   const stats = {
     totalDoctors: doctors.length,
     totalPatients: patients.length,
@@ -164,6 +178,9 @@ export default function DashboardPage() {
     pendingAppointments: appointments.filter(a => a.status === 'pending').length,
     completedAppointments: appointments.filter(a => a.status === 'completed').length,
     cancelledAppointments: appointments.filter(a => a.status === 'cancelled').length,
+    totalRevenue,
+    paidAppointmentsCount: paidAppointments.length,
+    uniquePaidPatients,
   };
 
   // Doctor Dashboard
@@ -377,7 +394,26 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 sm:gap-6">
+        {/* Total Revenue */}
+        <div className="bg-white rounded-xl shadow-sm border border-emerald-200/80 p-6 hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Total Revenue</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">
+                ₹{stats.totalRevenue.toLocaleString('en-IN')}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                From {stats.paidAppointmentsCount} paid {stats.paidAppointmentsCount === 1 ? 'appointment' : 'appointments'}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center">
+              <IndianRupee className="w-6 h-6 text-emerald-600" />
+            </div>
+          </div>
+        </div>
+
+        {/* Total Doctors */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
@@ -390,6 +426,7 @@ export default function DashboardPage() {
           </div>
         </div>
         
+        {/* Total Patients */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
@@ -402,6 +439,7 @@ export default function DashboardPage() {
           </div>
         </div>
         
+        {/* Total Appointments */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
@@ -414,6 +452,7 @@ export default function DashboardPage() {
           </div>
         </div>
         
+        {/* Completed Appointments */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
@@ -430,7 +469,17 @@ export default function DashboardPage() {
       {/* Quick Stats */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Overview</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex items-center justify-between p-4 bg-emerald-50/70 border border-emerald-100 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <IndianRupee className="w-5 h-5 text-emerald-600" />
+              <div>
+                <span className="text-gray-700 font-medium block">Completed Payments</span>
+                <span className="text-xs text-gray-500">{stats.paidAppointmentsCount} appointments</span>
+              </div>
+            </div>
+            <span className="font-bold text-emerald-700 text-lg">₹{stats.totalRevenue.toLocaleString('en-IN')}</span>
+          </div>
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center space-x-3">
               <AlertCircle className="w-5 h-5 text-yellow-600" />
@@ -452,6 +501,69 @@ export default function DashboardPage() {
             </div>
             <span className="font-semibold text-gray-800">{stats.cancelledAppointments}</span>
           </div>
+        </div>
+      </div>
+
+      {/* Recent Completed Payments */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">Completed Patient Payments</h3>
+            <p className="text-sm text-gray-500 mt-0.5">Revenue recorded exclusively from patients whose payment is complete</p>
+          </div>
+          <span className="inline-flex items-center self-start sm:self-auto px-3.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+            Total Revenue: ₹{stats.totalRevenue.toLocaleString('en-IN')}
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          {paidAppointments.length > 0 ? (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 text-gray-500 text-xs uppercase font-medium">
+                  <th className="py-3 px-6">Appointment #</th>
+                  <th className="py-3 px-6">Patient</th>
+                  <th className="py-3 px-6">Doctor</th>
+                  <th className="py-3 px-6">Date</th>
+                  <th className="py-3 px-6">Payment Status</th>
+                  <th className="py-3 px-6 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm">
+                {paidAppointments.slice(0, 10).map((app) => {
+                  const patient = patients.find((p) => p.id === app.patient_id);
+                  const doctor = doctors.find((d) => d.id === app.doctor_id);
+                  return (
+                    <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3.5 px-6 font-medium text-gray-800">
+                        #{app.appointment_number}
+                      </td>
+                      <td className="py-3.5 px-6 text-gray-700">
+                        {patient?.full_name || 'Registered Patient'}
+                      </td>
+                      <td className="py-3.5 px-6 text-gray-700">
+                        {doctor ? `Dr. ${doctor.full_name}` : 'Assigned Doctor'}
+                      </td>
+                      <td className="py-3.5 px-6 text-gray-500">
+                        {app.appointment_date}
+                      </td>
+                      <td className="py-3.5 px-6">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 capitalize">
+                          Paid
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-6 font-semibold text-emerald-700 text-right">
+                        ₹{(Number(app.payment_amount) || 0).toLocaleString('en-IN')}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <div className="p-8 text-center text-gray-500 text-sm">
+              No completed payment records found.
+            </div>
+          )}
         </div>
       </div>
     </div>
