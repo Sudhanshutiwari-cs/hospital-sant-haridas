@@ -12,7 +12,7 @@ function TopBar() {
         <div className="hidden sm:flex items-center gap-6"></div>
         <div className="flex items-center gap-3 sm:gap-4">
           <a
-            href="https://wa.me/919415057201"
+            href="https://wa.me/919540740947"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 hover:text-white/80 transition-colors"
@@ -218,15 +218,14 @@ function ContactInfoSection() {
       icon: <PhoneIcon />,
       title: "Call Us",
       lines: [
-        { label: "Primary Phone", value: "+91 95407 40947", href: "tel:+919540740947" },
-        { label: "Mobile", value: "+91 98680 53854", href: "tel:+919868053854" },
+        { label: "Phone", value: "+91 95407 40947", href: "tel:+919540740947" },
       ],
     },
     {
       icon: <WhatsAppGreenIcon />,
       title: "WhatsApp",
       lines: [
-        { label: "Chat with us", value: "+91 94150 57201", href: "https://wa.me/919415057201" },
+        { label: "Chat with us", value: "+91 95407 40947", href: "https://wa.me/919540740947" },
         { label: "Availability", value: "Always Available" },
       ],
     },
@@ -329,12 +328,6 @@ function ContactInfoSection() {
             </div>
           </div>
         </div>
-
-        {/* Conflict note */}
-        <p className="mt-6 sm:mt-8 text-center text-[11px] sm:text-[12px] text-gray-400 italic max-w-3xl mx-auto">
-          Note: The page contains conflicting contact details in a few places. The WhatsApp/Call
-          button points to +91 94150 57201, while the main contact section lists +91 98680 53854.
-        </p>
       </div>
     </section>
   );
@@ -435,7 +428,7 @@ const faqItems = [
     id: "appointment",
     label: "How do I book an appointment?",
     content:
-      "You can book an appointment by calling +91 95407 40947 or +91 98680 53854, messaging us on WhatsApp at +91 94150 57201, or emailing santharidashospital@gmail.com. You can also visit us directly during OPD hours.",
+      "You can book an appointment by calling +91 95407 40947, messaging us on WhatsApp at +91 95407 40947, or emailing santharidashospital@gmail.com. You can also visit us directly during OPD hours.",
   },
   {
     id: "hours",
@@ -541,15 +534,6 @@ const aboutSocialLinks = [
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <path d="M17 2h-3a5 5 0 00-5 5v3H6v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" stroke="#1877f2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    label: "X (Twitter)",
-    href: "#",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="#000" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 4l16 16M4 20L20 4" stroke="#000" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
   },

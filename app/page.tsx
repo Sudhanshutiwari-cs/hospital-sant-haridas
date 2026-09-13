@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase-client";
 
 // ── SVG Icons ────────────────────────────────────────────────────────────────
 
@@ -136,39 +137,6 @@ function OpdIcon() {
   );
 }
 
-function WardIcon() {
-  return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
-      <path d="M6 40V14a2 2 0 012-2h32a2 2 0 012 2v26" stroke="#1a3a5c" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M6 24h36M6 32h36" stroke="#1a9fa8" strokeWidth="1.5" />
-      <circle cx="16" cy="19" r="2" fill="#1a9fa8" />
-      <circle cx="32" cy="19" r="2" fill="#1a9fa8" />
-    </svg>
-  );
-}
-
-function RoomIcon() {
-  return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
-      <path d="M10 40V12a2 2 0 012-2h24a2 2 0 012 2v28" stroke="#1a3a5c" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M6 40h36" stroke="#1a3a5c" strokeWidth="1.8" strokeLinecap="round" />
-      <rect x="18" y="22" width="12" height="10" rx="1" stroke="#1a9fa8" strokeWidth="1.5" />
-      <circle cx="30" cy="27" r="1" fill="#1a9fa8" />
-    </svg>
-  );
-}
-
-function LabIcon() {
-  return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
-      <rect x="8" y="14" width="32" height="26" rx="3" stroke="#1a3a5c" strokeWidth="1.8" />
-      <path d="M16 14V8h16v6" stroke="#1a3a5c" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M16 24h16M16 30h10" stroke="#1a9fa8" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="34" cy="30" r="2" fill="#1a9fa8" opacity="0.6" />
-    </svg>
-  );
-}
-
 // ── Nav data ────────────────────────────────────────────────────────────────
 
 const mainNavItems = [
@@ -186,7 +154,7 @@ function TopBar() {
     <div className="w-full bg-[#1a9fa8] text-white text-[11px] sm:text-xs md:text-sm">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-4 flex items-center justify-center sm:justify-end gap-3 sm:gap-4 md:gap-6 h-9 sm:h-10">
         <a
-          href="https://wa.me/919415057201"
+          href="https://wa.me/919540740947"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1 sm:gap-1.5 hover:underline whitespace-nowrap font-medium"
@@ -319,7 +287,7 @@ function HeroSection() {
         style={{ height: "calc(100vh - 94px)", minHeight: 360, maxHeight: 680 }}
       >
         <Image
-          src="/hospital-hero.png"
+          src="https://res.cloudinary.com/df01whs60/image/upload/v1789286300/WhatsApp_Image_2026-09-06_at_5.59.33_PM_nqcxal.jpg"
           alt="Sant Haridas Hospital building"
           fill
           className="object-cover object-center"
@@ -401,22 +369,15 @@ const medicalServices = [
   { name: "Pathology Laboratory", icon: <PathologyIcon /> },
   { name: "Physiotherapy", icon: <PhysiotherapyIcon /> },
   { name: "OPDs Across Multiple Disciplines", icon: <OpdIcon /> },
-  { name: "Wards", icon: <WardIcon /> },
-  { name: "Semi-Private Rooms", icon: <RoomIcon /> },
-  { name: "Private Rooms", icon: <RoomIcon /> },
-  { name: "Fully Automated Laboratory", icon: <LabIcon /> },
 ];
 
 const facilitiesCare = [
   "State-of-the-art medical equipment",
   "State-of-the-art hospital facilities",
-  "Fully automated laboratories",
   "Personalized treatment plans",
   "Skilled doctors and medical staff",
   "Compassionate patient care",
   "Multiple OPD disciplines",
-  "Inpatient ward facilities",
-  "Semi-private and private rooms",
 ];
 
 function ChevronRight({ className = "" }: { className?: string }) {
@@ -547,34 +508,117 @@ function ServicesSection() {
 
 // ── Health Blogs ────────────────────────────────────────────────────────────
 
-const blogPosts = [
+type HomeBlogPost = {
+  slug: string;
+  bannerTitle: string;
+  bannerSubtitle: string;
+  fullTitle: string;
+  excerpt: string;
+  image: string;
+  imageAlt: string;
+};
+
+const defaultBlogPosts: HomeBlogPost[] = [
   {
-    title: "EYE CARE\nAWARENESS",
-    subtitle: "Understanding Symptoms,\nTreatment and Recovery",
-    fullTitle: "Eye Care Awareness: Understanding Symptoms, Treatment and Recovery",
-    excerpt: "Regular eye check-ups help detect problems early and preserve your vision for years to come...",
-    image: "/blog-cataract.png",
-    imageAlt: "Eye care consultation",
+    slug: "world-lung-cancer-day-2026",
+    bannerTitle: "WORLD LUNG\nCANCER DAY",
+    bannerSubtitle: "United for Awareness,\nPrevention and Early\nDetection",
+    fullTitle: "World Lung Cancer Day 2026: United for Awareness, Prevention and Early Detection",
+    excerpt: "Lung cancer is one of the most widespread and deadliest types of cancer. Early detection remains the most powerful tool...",
+    image: "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=1200&q=80",
+    imageAlt: "White ribbon awareness for lung cancer",
   },
   {
-    title: "WOMEN'S\nHEALTH",
-    subtitle: "Gynecology Care and\nWellness Tips",
-    fullTitle: "Women's Health: Gynecology Care and Wellness Tips",
-    excerpt: "From routine check-ups to specialized care, our gynecology department supports women at every stage...",
+    slug: "water-borne-diseases-list-risks-prevention",
+    bannerTitle: "WATER BORNE\nDISEASES",
+    bannerSubtitle: "List, Risks, and\nPrevention",
+    fullTitle: "Water Borne Diseases — List, Risks, and Prevention",
+    excerpt: "Water-borne diseases are illnesses caused by microscopic organisms ingested through contaminated water...",
     image: "/blog-glaucoma.png",
-    imageAlt: "Gynecology consultation",
+    imageAlt: "Water borne diseases prevention",
   },
   {
-    title: "GENERAL\nWELLNESS",
-    subtitle: "Preventive Medicine\nand Healthy Living",
-    fullTitle: "General Wellness: Preventive Medicine and Healthy Living",
-    excerpt: "Preventive care and timely medical attention are the cornerstones of a healthy life...",
+    slug: "pregnancy-weeks-1-to-5-guide",
+    bannerTitle: "PREGNANCY\nWEEKS 1 TO 5",
+    bannerSubtitle: "A Guide for\nMoms-to-Be",
+    fullTitle: "Pregnancy Weeks 1 to 5: A Guide for Moms-to-Be",
+    excerpt: "The first five weeks of pregnancy mark the beginning of an extraordinary journey of rapid development...",
     image: "/blog-child-eye.png",
-    imageAlt: "General health check-up",
+    imageAlt: "Pregnancy care guide",
   },
 ];
 
 function HealthBlogsSection() {
+  const [posts, setPosts] = useState<HomeBlogPost[]>(defaultBlogPosts);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadBlogs() {
+      try {
+        const { data, error } = await supabase
+          .from("blogs")
+          .select("id, title, slug, excerpt, featured_image, featured_image_alt, banner_title, banner_subtitle, status, published_at, is_featured, created_at")
+          .eq("status", "published")
+          .order("is_featured", { ascending: false })
+          .order("published_at", { ascending: false, nullsFirst: false })
+          .order("created_at", { ascending: false })
+          .limit(3);
+
+        if (error) {
+          const { data: fallbackData, error: fallbackErr } = await supabase
+            .from("blogs")
+            .select("id, title, slug, excerpt, featured_image, featured_image_alt, status, published_at, is_featured, created_at")
+            .eq("status", "published")
+            .order("is_featured", { ascending: false })
+            .order("published_at", { ascending: false, nullsFirst: false })
+            .order("created_at", { ascending: false })
+            .limit(3);
+
+          if (!fallbackErr && fallbackData && fallbackData.length > 0 && !cancelled) {
+            setPosts(
+              fallbackData.map((row: any) => ({
+                slug: row.slug,
+                bannerTitle: row.title,
+                bannerSubtitle: row.excerpt || "",
+                fullTitle: row.title,
+                excerpt: row.excerpt || "",
+                image:
+                  row.featured_image ||
+                  "https://res.cloudinary.com/df01whs60/image/upload/v1785656956/Sant_haridas_hospital_logo_page-0001_vu9ssi.jpg",
+                imageAlt: row.featured_image_alt || row.title,
+              }))
+            );
+          }
+          return;
+        }
+
+        if (data && data.length > 0 && !cancelled) {
+          setPosts(
+            data.map((row: any) => ({
+              slug: row.slug,
+              bannerTitle: (row.banner_title && row.banner_title.trim()) || row.title,
+              bannerSubtitle: (row.banner_subtitle && row.banner_subtitle.trim()) || row.excerpt || "",
+              fullTitle: row.title,
+              excerpt: row.excerpt || "",
+              image:
+                row.featured_image ||
+                "https://res.cloudinary.com/df01whs60/image/upload/v1785656956/Sant_haridas_hospital_logo_page-0001_vu9ssi.jpg",
+              imageAlt: row.featured_image_alt || row.title,
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Failed to load home blogs:", err);
+      }
+    }
+
+    loadBlogs();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section className="w-full bg-white py-10 sm:py-12 px-3 sm:px-4">
       <div className="max-w-[1200px] mx-auto">
@@ -592,16 +636,16 @@ function HealthBlogsSection() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {blogPosts.map((post) => (
-            <Link key={post.fullTitle} href="/blogs" className="group flex flex-col">
+          {posts.map((post) => (
+            <Link key={post.slug || post.fullTitle} href={`/blogs/${post.slug}`} className="group flex flex-col">
               <div className="relative rounded-lg overflow-hidden bg-[#d6eef2]" style={{ height: 180 }}>
                 <div className="absolute inset-0 z-10 flex flex-col justify-center pl-4 sm:pl-5 pr-[46%]">
-                  <p className="text-[#1a3a5c] font-bold text-[13px] sm:text-[15px] leading-tight whitespace-pre-line mb-2 sm:mb-3">
-                    {post.title}
+                  <p className="text-[#1a3a5c] font-bold text-[13px] sm:text-[15px] leading-tight whitespace-pre-line mb-2 sm:mb-3 line-clamp-3">
+                    {post.bannerTitle}
                   </p>
                   <div className="w-8 sm:w-10 h-[3px] bg-[#1a9fa8] mb-2 sm:mb-3" />
-                  <p className="text-[#1a3a5c] text-[11px] sm:text-[12px] leading-snug whitespace-pre-line">
-                    {post.subtitle}
+                  <p className="text-[#1a3a5c] text-[11px] sm:text-[12px] leading-snug whitespace-pre-line line-clamp-3">
+                    {post.bannerSubtitle}
                   </p>
                 </div>
 
@@ -650,19 +694,19 @@ const faqItems = [
     id: "services",
     label: "Our Medical Services",
     content:
-      "We offer a wide range of medical services including Eye OPD, Gynecology, Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines. Our inpatient facilities include wards, semi-private rooms, and private rooms.",
+      "We offer a wide range of medical services including Eye OPD, Gynecology, Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines.",
   },
   {
     id: "facilities",
     label: "Facilities & Infrastructure",
     content:
-      "Our hospital is equipped with state-of-the-art medical equipment and a fully automated laboratory. We provide personalized treatment plans delivered by skilled doctors and medical staff, ensuring the highest standard of patient care.",
+      "Our hospital is equipped with state-of-the-art medical equipment and modern diagnostic infrastructure. We provide personalized treatment plans delivered by skilled doctors and medical staff, ensuring the highest standard of patient care.",
   },
   {
     id: "contact",
     label: "Contact & Appointments",
     content:
-      "For appointments and enquiries, please call +91 95407 40947 or +91 98680 53854. You can also reach us on WhatsApp at +91 94150 57201 or email us at santharidashospital@gmail.com. We are located at Main, Nangloi – Najafgarh Road, Ram Nagar, Najafgarh, Delhi – 110043.",
+      "For appointments and enquiries, please call +91 95407 40947. You can also reach us on WhatsApp at +91 95407 40947 or email us at santharidashospital@gmail.com. We are located at Main, Nangloi – Najafgarh Road, Ram Nagar, Najafgarh, Delhi – 110043.",
   },
 ];
 
@@ -750,139 +794,90 @@ function FeelFreeSection() {
   );
 }
 
-// ── Patient Stories ─────────────────────────────────────────────────────────
+// ── Patient Stories / Reviews ──────────────────────────────────────────────
 
 const patientStories = [
   {
-    name: "Mr. Rajesh Kumar",
-    image: "/patient-ronak.png",
-    hospital: "Sant Haridas Hospital, Najafgarh",
-    text: "Mr. Rajesh Kumar was treated at Sant Haridas Hospital for a complex medical condition. With advanced diagnostic facilities and personalized care from our skilled doctors, he made a full recovery and is now leading a healthy, active life.",
-  },
-  {
-    name: "Mrs. Anita Desai",
-    image: "/patient-prabhat.png",
-    hospital: "Sant Haridas Hospital, Najafgarh",
-    text: "Mrs. Anita Desai received comprehensive gynecology care at Sant Haridas Hospital. Thanks to early diagnosis and expert treatment by our specialists, she recovered quickly and continues to enjoy good health and wellbeing.",
-  },
-  {
-    name: "Master Aarav Singh",
+    name: "Monika Chauhan",
     image: "/patient-sunita.png",
     hospital: "Sant Haridas Hospital, Najafgarh",
-    text: "Master Aarav Singh, aged 7, visited Sant Haridas Hospital for a general health concern. Our pediatric team provided compassionate care and complete treatment, ensuring excellent recovery and peace of mind for his family.",
+    text: "Dr prateek is one of the best opthamalogist and true expert in his field. His attention to detail and compassionate care make every visit a pleasure. I highly recommend him to anyone due to his professionalism, expertise, and genuine concern for his patients' well-being. I wholeheartedly recommend him to anyone seeking top-quality eye care.",
+  },
+  {
+    name: "Anurag Shandil",
+    image: "/patient-prabhat.png",
+    hospital: "Sant Haridas Hospital, Najafgarh",
+    text: "Dr. Prateek is an extremely competent doctor and an astute surgeon par excellence. His credentials speak up for his clinical and surgical skills. Highly recommended for all kind of eye problems especially cataract, squint and ocular aesthetics. Best eye doctor in Delhi NCR.",
+  },
+  {
+    name: "Nitika Acharya",
+    image: "/patient-ronak.png",
+    hospital: "Sant Haridas Hospital, Najafgarh",
+    text: "Dr. Prateek Sehrawat is the best opthamalogist. He is an expert in his field and gives full attention to the patients. Its been a pleasure visiting him. Highly recommended.",
   },
 ];
 
 function PatientStoriesSection() {
-  const [current, setCurrent] = useState(0);
-  const total = patientStories.length;
-
-  function prev() { setCurrent((c) => (c - 1 + total) % total); }
-  function next() { setCurrent((c) => (c + 1) % total); }
-
-  const story = patientStories[current];
-  const nextStory = patientStories[(current + 1) % total];
-
   return (
     <section className="w-full bg-white py-10 sm:py-14 px-3 sm:px-4 overflow-hidden">
-      <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
-        <div className="w-full lg:w-[220px] flex-shrink-0 flex flex-col gap-4 sm:gap-6 lg:pt-10">
-          <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] leading-snug">
-            Our Patient&apos;s Stories
+      <div className="max-w-[1200px] mx-auto">
+        <div className="mb-6 sm:mb-8 border-b-2 border-gray-200 pb-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1a3a5c] underline decoration-[#1a3a5c] underline-offset-4">
+            Patient Reviews
           </h2>
-          <Link
-            href="/patient-stories"
-            className="inline-flex items-center justify-center w-[120px] sm:w-[140px] border-2 border-[#e07060] text-[#e07060] font-semibold text-[13px] sm:text-[14px] rounded px-4 sm:px-5 py-2 sm:py-2.5 hover:bg-[#fdf4f3] transition-colors"
-          >
-            View all
-          </Link>
         </div>
 
-        <div className="flex-1 w-full flex flex-col gap-4 min-w-0">
-          <div className="flex items-center gap-3 justify-center">
-            <button onClick={prev} aria-label="Previous story" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <button onClick={next} aria-label="Next story" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="flex gap-4 sm:gap-5 items-stretch">
-            <div className="flex-1 min-w-0 relative bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-6 flex flex-col justify-between" style={{ minHeight: 280 }}>
-              <div className="absolute top-4 left-4 sm:top-5 sm:left-5 text-[48px] sm:text-[64px] leading-none text-[#f0b8b0] font-serif select-none" aria-hidden="true">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {patientStories.map((story) => (
+            <div
+              key={story.name}
+              className="relative bg-white border border-gray-200 rounded-2xl shadow-sm p-5 sm:p-6 flex flex-col justify-between hover:shadow-md transition-shadow"
+            >
+              <div
+                className="absolute top-4 right-5 text-[40px] leading-none text-[#f0b8b0]/50 font-serif select-none pointer-events-none"
+                aria-hidden="true"
+              >
                 &ldquo;
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start pt-4">
-                <div className="flex-shrink-0 flex flex-col items-center gap-1 mx-auto sm:mx-0" style={{ width: 110 }}>
-                  <div className="relative" style={{ width: 100, height: 100 }}>
-                    <svg viewBox="0 0 120 120" className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M60 5 C82 5, 110 22, 115 50 C120 78, 100 112, 70 116 C40 120, 8 102, 5 72 C2 42, 20 5, 60 5Z" fill="#f8d8d2" />
-                    </svg>
-                    <div className="absolute inset-[8px] rounded-full overflow-hidden">
-                      <Image src={story.image} alt={`Patient ${story.name}`} fill className="object-cover object-center" />
-                    </div>
+              <div>
+                <div className="flex items-center gap-3.5 mb-4">
+                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#1a9fa8]/30">
+                    <Image
+                      src={story.image}
+                      alt={`Patient ${story.name}`}
+                      fill
+                      className="object-cover object-center"
+                    />
                   </div>
-                  <div className="bg-[#2eaa5e] text-white text-[9px] sm:text-[10px] font-semibold text-center px-2 sm:px-3 py-1 rounded-sm leading-tight -mt-3 relative z-10 w-full max-w-[100px] sm:max-w-[110px]">
-                    <span className="block text-[8px] sm:text-[9px] font-normal opacity-80">Patient</span>
-                    {story.name}
+                  <div>
+                    <h3 className="font-bold text-[#1a3a5c] text-[15px] leading-tight">
+                      {story.name}
+                    </h3>
+                    <span className="inline-block bg-[#2eaa5e]/15 text-[#1f7e44] text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1">
+                      Verified Patient
+                    </span>
                   </div>
                 </div>
 
-                <p className="flex-1 text-[13px] sm:text-[14px] text-gray-700 leading-relaxed sm:pt-2">
-                  {story.text}
+                <div className="flex items-center gap-1 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className="w-4 h-4 text-amber-400 fill-amber-400" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+
+                <p className="text-[13px] sm:text-[14px] text-gray-700 leading-relaxed">
+                  &ldquo;{story.text}&rdquo;
                 </p>
               </div>
 
-              <div className="flex items-end justify-between mt-4 sm:mt-5">
-                <p className="text-[12px] sm:text-[13px] text-gray-400 font-medium">{story.hospital}</p>
-                <div className="text-[48px] sm:text-[64px] leading-none text-[#f0b8b0] font-serif select-none" aria-hidden="true">
-                  &rdquo;
-                </div>
+              <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between text-[11px] sm:text-[12px] text-gray-400 font-medium">
+                <span>{story.hospital}</span>
               </div>
             </div>
-
-            <div
-              className="hidden lg:flex flex-col justify-between bg-white border border-gray-200 rounded-2xl shadow-sm p-6 overflow-hidden cursor-pointer"
-              style={{ width: 120, minHeight: 300, opacity: 0.6 }}
-              onClick={next}
-              aria-label="Next patient story"
-            >
-              <div className="text-[48px] leading-none text-[#f0b8b0] font-serif select-none" aria-hidden="true">
-                &ldquo;
-              </div>
-              <div className="relative mx-auto" style={{ width: 80, height: 80 }}>
-                <svg viewBox="0 0 80 80" className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M40 3 C55 3, 74 15, 77 33 C80 52, 66 75, 46 77 C26 80, 5 68, 3 48 C1 28, 14 3, 40 3Z" fill="#f8d8d2" />
-                </svg>
-                <div className="absolute inset-[5px] rounded-full overflow-hidden">
-                  <Image src={nextStory.image} alt={`Patient ${nextStory.name}`} fill className="object-cover object-center" />
-                </div>
-              </div>
-              <div className="bg-[#2eaa5e] text-white text-[9px] font-semibold text-center px-2 py-1 rounded-sm leading-tight">
-                <span className="block opacity-80">Patient</span>
-                {nextStory.name.split(" ").slice(0, 2).join(" ")}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 justify-center">
-            <button onClick={prev} aria-label="Previous story" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <button onClick={next} aria-label="Next story" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[#e07060] text-[#e07060] hover:bg-[#fdf4f3] transition-colors">
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
+          ))}
         </div>
       </div>
     </section>
@@ -912,16 +907,12 @@ function ContactSection() {
             <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1a3a5c]">Call Us</h3>
             <div className="flex flex-col gap-2 text-[13px] sm:text-[14px] text-gray-700">
               <a href="tel:+919540740947" className="hover:text-[#1a9fa8] transition-colors">
-                <span className="text-gray-500 text-[11px] sm:text-[12px] block">Primary Phone</span>
+                <span className="text-gray-500 text-[11px] sm:text-[12px] block">Phone</span>
                 +91 95407 40947
               </a>
-              <a href="tel:+919868053854" className="hover:text-[#1a9fa8] transition-colors">
-                <span className="text-gray-500 text-[11px] sm:text-[12px] block">Mobile</span>
-                +91 98680 53854
-              </a>
-              <a href="https://wa.me/919415057201" target="_blank" rel="noopener noreferrer" className="hover:text-[#1a9fa8] transition-colors flex items-center gap-1.5">
+              <a href="https://wa.me/919540740947" target="_blank" rel="noopener noreferrer" className="hover:text-[#1a9fa8] transition-colors flex items-center gap-1.5">
                 <WhatsAppIcon />
-                <span>+91 94150 57201 (WhatsApp)</span>
+                <span>+91 95407 40947 (WhatsApp)</span>
               </a>
             </div>
           </div>
@@ -953,11 +944,6 @@ function ContactSection() {
           </div>
 
         </div>
-
-        {/* Conflict note */}
-        <p className="mt-6 sm:mt-8 text-center text-[11px] sm:text-[12px] text-gray-400 italic max-w-3xl mx-auto">
-          Note: The page contains conflicting contact details in a few places. The WhatsApp/Call button points to +91 94150 57201, while the main contact section lists +91 98680 53854.
-        </p>
       </div>
     </section>
   );
@@ -992,15 +978,6 @@ const socialLinks = [
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
         <path d="M17 2h-3a5 5 0 00-5 5v3H6v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" stroke="#1877f2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    label: "X (Twitter)",
-    href: "https://twitter.com/",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="#000" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 4l16 16M4 20L20 4" stroke="#000" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
   },

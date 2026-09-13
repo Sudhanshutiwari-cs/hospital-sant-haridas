@@ -9,8 +9,6 @@ import {
   FlaskConical,
   Activity,
   ClipboardList,
-  BedDouble,
-  DoorOpen,
   Microscope,
   Search,
   X,
@@ -28,7 +26,6 @@ import {
   FaFacebookF,
   FaInstagram,
   FaYoutube,
-  FaXTwitter,
 } from "react-icons/fa6";
 
 // ── Shared: Top Bar ───────────────────────────────────────────────────────────
@@ -40,7 +37,7 @@ function TopBar() {
         <div className="hidden sm:flex items-center gap-6"></div>
         <div className="flex items-center gap-3 sm:gap-4">
           <a
-            href="https://wa.me/919415057201"
+            href="https://wa.me/919540740947"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 hover:text-white/80 transition-colors"
@@ -275,63 +272,9 @@ const services: Service[] = [
     detailedInfo:
       "Sant Haridas Hospital runs OPD services across multiple medical disciplines, ensuring convenient access to a wide range of specialist consultations under one roof. Our coordinated approach means patients can easily be referred between departments for comprehensive, connected care.",
   },
-  {
-    id: "wards",
-    category: "Inpatient",
-    title: "Wards",
-    description:
-      "Well-maintained inpatient wards with round-the-clock nursing care, monitoring, and support for admitted patients.",
-    features: ["Nursing care", "Doctor rounds", "Clean environment", "Monitored stay"],
-    image: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80",
-    icon: <BedDouble className={iconClass} />,
-    availability: "Always Available",
-    detailedInfo:
-      "Our inpatient wards provide a clean, comfortable, and well-monitored environment for patients requiring admission. Round-the-clock nursing care, regular doctor rounds, and coordinated support services ensure that every admitted patient receives attentive and compassionate care throughout their stay.",
-  },
-  {
-    id: "semi-private",
-    category: "Rooms",
-    title: "Semi-Private Rooms",
-    description:
-      "Comfortable semi-private inpatient rooms offering privacy, comfort, and attentive care at an affordable price point.",
-    features: ["Comfortable stay", "Shared facility", "Attentive nursing", "Affordable"],
-    image: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80",
-    icon: <DoorOpen className={iconClass} />,
-    availability: "Always Available",
-    detailedInfo:
-      "Our semi-private rooms offer a comfortable and affordable inpatient option with shared facilities. Each room is designed for patient comfort and is supported by attentive nursing care, regular doctor visits, and clean, well-maintained amenities.",
-  },
-  {
-    id: "private-rooms",
-    category: "Rooms",
-    title: "Private Rooms",
-    description:
-      "Private inpatient rooms offering complete privacy, comfort, and personalized care for patients who prefer a more exclusive environment.",
-    features: ["Complete privacy", "Personalized care", "Attendant space", "Premium comfort"],
-    image: "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=800&q=80",
-    icon: <DoorOpen className={iconClass} />,
-    availability: "Always Available",
-    highlight: "Premium",
-    detailedInfo:
-      "Our private rooms offer complete privacy and premium comfort for patients who prefer an exclusive environment during their stay. Each private room includes space for an attendant, personalized nursing care, and enhanced amenities to ensure a comfortable recovery experience.",
-  },
-  {
-    id: "automated-lab",
-    category: "Diagnostics",
-    title: "Fully Automated Laboratory",
-    description:
-      "State-of-the-art fully automated laboratory providing fast, accurate, and reliable diagnostic results with minimal turnaround time.",
-    features: ["Fully automated", "Fast reporting", "High accuracy", "Modern analyzers"],
-    image: "https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=800&q=80",
-    icon: <Microscope className={iconClass} />,
-    availability: "Mon – Sat",
-    highlight: "Advanced",
-    detailedInfo:
-      "Our fully automated laboratory is equipped with modern analyzers that ensure fast, accurate, and reliable diagnostic results. Automation minimizes human error, standardizes quality, and reduces turnaround time, helping doctors make quicker, better-informed clinical decisions for our patients.",
-  },
 ];
 
-const categories = ["All", "OPD", "Speciality", "Diagnostics", "Rehabilitation", "Inpatient", "Rooms"];
+const categories = ["All", "OPD", "Speciality", "Diagnostics", "Rehabilitation"];
 
 // ── Modal Component ───────────────────────────────────────────────────────────
 
@@ -502,25 +445,25 @@ const serviceFaqItems = [
     id: "services-list",
     label: "What medical services does Sant Haridas Hospital offer?",
     content:
-      "Sant Haridas Hospital offers a comprehensive range of medical services including Eye OPD, Gynecology, Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines. Inpatient services include wards, semi-private rooms, and private rooms, supported by a fully automated laboratory.",
+      "Sant Haridas Hospital offers a comprehensive range of medical services including Eye OPD, Gynecology, Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines.",
   },
   {
     id: "facilities",
     label: "What facilities are available at the hospital?",
     content:
-      "Our hospital is equipped with state-of-the-art medical equipment and hospital facilities, fully automated laboratories, and modern diagnostic infrastructure. We offer personalized treatment plans, skilled doctors and medical staff, compassionate patient care, multiple OPD disciplines, inpatient ward facilities, and both semi-private and private rooms.",
+      "Our hospital is equipped with state-of-the-art medical equipment and modern diagnostic infrastructure. We offer personalized treatment plans, skilled doctors and medical staff, compassionate patient care, and multiple OPD disciplines.",
   },
   {
     id: "appointment",
     label: "How do I book an appointment or consultation?",
     content:
-      "You can book an appointment by calling our primary phone at +91 95407 40947, our mobile at +91 98680 53854, messaging us on WhatsApp at +91 94150 57201, or emailing santharidashospital@gmail.com. You can also visit the hospital directly at Main, Nangloi – Najafgarh Road, Ram Nagar, Najafgarh, Delhi – 110043.",
+      "You can book an appointment by calling +91 95407 40947, messaging us on WhatsApp at +91 95407 40947, or emailing santharidashospital@gmail.com. You can also visit the hospital directly at Main, Nangloi – Najafgarh Road, Ram Nagar, Najafgarh, Delhi – 110043.",
   },
   {
     id: "contact",
     label: "Where is Sant Haridas Hospital located?",
     content:
-      "Sant Haridas Hospital is located at Main, Nangloi – Najafgarh Road, Ram Nagar, Najafgarh, Delhi – 110043, India. For appointments and enquiries, you can reach us at +91 95407 40947 / +91 98680 53854 or email santharidashospital@gmail.com.",
+      "Sant Haridas Hospital is located at Main, Nangloi – Najafgarh Road, Ram Nagar, Najafgarh, Delhi – 110043, India. For appointments and enquiries, you can reach us at +91 95407 40947 or email santharidashospital@gmail.com.",
   },
 ];
 
@@ -608,12 +551,6 @@ const footerSocialLinks = [
     href: "https://www.facebook.com/100090027224112/",
     Icon: FaFacebookF,
     color: "#1877f2",
-  },
-  {
-    label: "X (Twitter)",
-    href: "#",
-    Icon: FaXTwitter,
-    color: "#000000",
   },
   {
     label: "YouTube",
@@ -799,7 +736,7 @@ export default function ServicesPage() {
               {[
                 { Icon: Stethoscope, label: "State-of-the-Art Facilities", sub: "Modern medical equipment" },
                 { Icon: Heart, label: "Skilled Doctors & Staff", sub: "Experienced medical team" },
-                { Icon: Microscope, label: "Fully Automated Labs", sub: "Accurate & fast diagnostics" },
+                { Icon: Microscope, label: "Pathology Laboratory", sub: "Accurate & reliable diagnostics" },
                 { Icon: Activity, label: "Compassionate Care", sub: "Personalized treatment plans" },
               ].map(({ Icon, label, sub }) => (
                 <div key={label} className="flex flex-col items-center text-center gap-2">

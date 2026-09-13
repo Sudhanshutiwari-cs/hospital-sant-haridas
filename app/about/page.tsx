@@ -13,7 +13,7 @@ function TopBar() {
         <div className="hidden sm:flex items-center gap-6"></div>
         <div className="flex items-center gap-3 sm:gap-4">
           <a
-            href="https://wa.me/919415057201"
+            href="https://wa.me/919540740947"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 hover:text-white/80 transition-colors"
@@ -280,9 +280,7 @@ function AboutUsText() {
           <p>
             We provide a wide range of medical services including <strong>Eye OPD, Gynecology,
             Medicine OPD, Pathology Laboratory, Physiotherapy</strong>, and OPDs across multiple
-            disciplines. Our inpatient facilities include <strong>wards, semi-private rooms,
-            and private rooms</strong>, supported by a <strong>fully automated laboratory</strong> and
-            state-of-the-art diagnostic equipment.
+            disciplines, supported by state-of-the-art diagnostic equipment.
           </p>
           <p>
             At Sant Haridas Hospital, we combine skilled doctors and medical staff with
@@ -337,7 +335,7 @@ function VisionMissionSection() {
     {
       icon: <MissionIcon />,
       title: "Mission",
-      text: "To provide comprehensive, affordable, and high-quality medical services across multiple disciplines, supported by state-of-the-art facilities, skilled doctors, and a fully automated laboratory — always putting the patient first.",
+      text: "To provide comprehensive, affordable, and high-quality medical services across multiple disciplines, supported by state-of-the-art facilities and skilled doctors — always putting the patient first.",
     },
   ];
 
@@ -582,19 +580,19 @@ const faqItems = [
     id: "services",
     label: "Our Medical Services",
     content:
-      "We offer a wide range of medical services including Eye OPD, Gynecology, Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines. Our inpatient facilities include wards, semi-private rooms, and private rooms, supported by a fully automated laboratory.",
+      "We offer a wide range of medical services including Eye OPD, Gynecology, Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines.",
   },
   {
     id: "facilities",
     label: "Facilities & Infrastructure",
     content:
-      "Our hospital is equipped with state-of-the-art medical equipment and hospital facilities, fully automated laboratories, and modern diagnostic infrastructure. We provide personalized treatment plans delivered by skilled doctors and medical staff, ensuring the highest standard of patient care.",
+      "Our hospital is equipped with state-of-the-art medical equipment and hospital facilities and modern diagnostic infrastructure. We provide personalized treatment plans delivered by skilled doctors and medical staff, ensuring the highest standard of patient care.",
   },
   {
     id: "contact",
     label: "Contact & Appointments",
     content:
-      "For appointments and enquiries, please call +91 95407 40947 or +91 98680 53854. You can also reach us on WhatsApp at +91 94150 57201 or email us at santharidashospital@gmail.com. We are located at Main, Nangloi – Najafgarh Road, Ram Nagar, Najafgarh, Delhi – 110043.",
+      "For appointments and enquiries, please call +91 95407 40947. You can also reach us on WhatsApp at +91 95407 40947 or email us at santharidashospital@gmail.com. We are located at Main, Nangloi – Najafgarh Road, Ram Nagar, Najafgarh, Delhi – 110043.",
   },
 ];
 
@@ -720,15 +718,6 @@ const aboutSocialLinks = [
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-      </svg>
-    ),
-  },
-  {
-    label: "X (Twitter)",
-    href: "#",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="#000" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 4l16 16M4 20L20 4" stroke="#000" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
   },

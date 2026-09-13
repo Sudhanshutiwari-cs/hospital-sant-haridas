@@ -15,7 +15,7 @@ function TopBar() {
         <nav className="hidden sm:flex items-center gap-5"></nav>
         <div className="flex items-center gap-3 sm:gap-4">
           <a
-            href="https://wa.me/919415057201"
+            href="https://wa.me/919540740947"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 hover:underline whitespace-nowrap"
@@ -27,11 +27,11 @@ function TopBar() {
             <span className="hidden xs:inline">WhatsApp Us</span>
             <span className="xs:hidden">WhatsApp</span>
           </a>
-          <a href="tel:+919268880303" className="flex items-center gap-1.5 hover:underline whitespace-nowrap">
+          <a href="tel:+919540740947" className="flex items-center gap-1.5 hover:underline whitespace-nowrap">
             <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.17 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="hidden sm:inline">+91 926 888 0303</span>
+            <span className="hidden sm:inline">+91 95407 40947</span>
             <span className="sm:hidden">Call</span>
           </a>
         </div>
@@ -306,15 +306,6 @@ const socialLinks = [
     ),
   },
   {
-    label: "X (Twitter)",
-    href: "#",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="#000" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 4l16 16M4 20L20 4" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
     label: "YouTube",
     href: "http://www.youtube.com/@SantHaridashospital",
     icon: (
@@ -371,8 +362,8 @@ function BlogsFooter() {
         </div>
         <div className="flex flex-col items-center lg:items-end gap-1.5 text-center lg:text-right">
           <p className="text-[11px] sm:text-[12px] font-semibold text-[#1a3a5c]">Emergency Helpline</p>
-          <a href="tel:+919268880303" className="text-[14px] sm:text-[15px] font-bold text-[#1a9fa8] hover:text-[#1a3a5c] transition-colors">
-            +91 926 888 0303
+          <a href="tel:+919540740947" className="text-[14px] sm:text-[15px] font-bold text-[#1a9fa8] hover:text-[#1a3a5c] transition-colors">
+            +91 95407 40947
           </a>
           <Link
             href="/doctors"
@@ -789,13 +780,13 @@ export default function BlogDetailPage() {
                   Book an Appointment
                 </Link>
                 <a
-                  href="tel:+919268880303"
+                  href="tel:+919540740947"
                   className="mt-3 flex items-center justify-center gap-2 text-[#1a9fa8] hover:text-white text-[12px] sm:text-[13px] font-semibold transition-colors"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
                     <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.17 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  Emergency: +91 926 888 0303
+                  Emergency: +91 95407 40947
                 </a>
               </div>
 

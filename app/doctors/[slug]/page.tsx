@@ -111,7 +111,7 @@ function TopBar() {
     <div className="w-full bg-[#1a9fa8] text-white text-[11px] sm:text-sm">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-4 flex items-center justify-center sm:justify-end gap-3 sm:gap-6 h-9 sm:h-10">
         <a
-          href="https://wa.me/919415057201"
+          href="https://wa.me/919540740947"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 hover:underline whitespace-nowrap font-medium"
@@ -120,9 +120,9 @@ function TopBar() {
           <span className="hidden xs:inline">WhatsApp Us</span>
           <span className="xs:hidden">WhatsApp</span>
         </a>
-        <a href="tel:+919268880303" className="flex items-center gap-1.5 hover:underline whitespace-nowrap font-medium">
+        <a href="tel:+919540740947" className="flex items-center gap-1.5 hover:underline whitespace-nowrap font-medium">
           <PhoneIcon />
-          <span className="hidden sm:inline">+91 926 888 0303</span>
+          <span className="hidden sm:inline">+91 95407 40947</span>
           <span className="sm:hidden">Call</span>
         </a>
       </div>
@@ -574,8 +574,8 @@ export default function DoctorProfilePage() {
                 <div className="mt-4 p-3 bg-[#f0faf5] rounded-lg">
                   <p className="text-[11px] sm:text-xs text-gray-600">
                     <span className="font-semibold">Emergency Helpline:</span>{" "}
-                    <a href="tel:+919268880303" className="text-[#1a9fa8] font-semibold">
-                      +91 926 888 0303
+                    <a href="tel:+919540740947" className="text-[#1a9fa8] font-semibold">
+                      +91 95407 40947
                     </a>
                   </p>
                 </div>
@@ -637,15 +637,6 @@ export default function DoctorProfilePage() {
                   ),
                 },
                 {
-                  label: "X",
-                  href: "#",
-                  icon: (
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 sm:w-5 sm:h-5" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M4 4l16 16M4 20L20 4" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  ),
-                },
-                {
                   label: "YouTube",
                   href: "http://www.youtube.com/@SantHaridashospital",
                   icon: (
@@ -674,8 +665,8 @@ export default function DoctorProfilePage() {
           </div>
           <div className="flex flex-col items-center lg:items-end gap-1.5 text-center lg:text-right">
             <p className="text-[11px] sm:text-[12px] font-semibold text-[#1a3a5c]">Emergency Helpline</p>
-            <a href="tel:+919268880303" className="text-[14px] sm:text-[15px] font-bold text-[#1a9fa8] hover:text-[#1a3a5c] transition-colors">
-              +91 926 888 0303
+            <a href="tel:+919540740947" className="text-[14px] sm:text-[15px] font-bold text-[#1a9fa8] hover:text-[#1a3a5c] transition-colors">
+              +91 95407 40947
             </a>
             <Link
               href="/book-appointment"
