@@ -4,9 +4,21 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const params = await Promise.resolve(props.params);
+    let id = params?.id;
+    if (!id) {
+      const url = new URL(request.url);
+      const parts = url.pathname.split('/').filter(Boolean);
+      id = parts[parts.length - 1];
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 });
+    }
+
     const { data: appointment, error } = await supabaseAdmin
       .from('appointments')
       .select(`
@@ -14,7 +26,7 @@ export async function GET(
         doctors:doctor_id (full_name, specialization),
         patients:patient_id (full_name, phone)
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (error) throw error;
@@ -28,22 +40,46 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const params = await Promise.resolve(props.params);
+    let id = params?.id;
+    if (!id) {
+      const url = new URL(request.url);
+      const parts = url.pathname.split('/').filter(Boolean);
+      id = parts[parts.length - 1];
+    }
+
     const body = await request.json();
+    const { id: bodyId, doctors, patients, ...cleanBody } = body;
+    const targetId = id || bodyId;
+
+    if (!targetId) {
+      return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 });
+    }
+
+    const updatePayload: Record<string, any> = {
+      ...cleanBody,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Automatically confirm appointment if payment status is changed to paid
+    if (updatePayload.payment_status?.toLowerCase() === 'paid') {
+      updatePayload.status = 'confirmed';
+    }
 
     const { data: appointment, error } = await supabaseAdmin
       .from('appointments')
-      .update({ ...body, updated_at: new Date().toISOString() })
-      .eq('id', params.id)
+      .update(updatePayload)
+      .eq('id', targetId)
       .select()
       .single();
 
     if (error) throw error;
 
     // If appointment is cancelled, free up the slot
-    if (body.status === 'cancelled' && appointment.slot_id) {
+    if (updatePayload.status === 'cancelled' && appointment.slot_id) {
       await supabaseAdmin
         .from('doctor_slots')
         .update({ is_booked: false })
@@ -51,22 +87,34 @@ export async function PATCH(
     }
 
     return NextResponse.json(appointment);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating appointment:', error);
-    return NextResponse.json({ error: 'Failed to update appointment' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to update appointment' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const params = await Promise.resolve(props.params);
+    let id = params?.id;
+    if (!id) {
+      const url = new URL(request.url);
+      const parts = url.pathname.split('/').filter(Boolean);
+      id = parts[parts.length - 1];
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 });
+    }
+
     // Get appointment to find slot_id
     const { data: appointment, error: fetchError } = await supabaseAdmin
       .from('appointments')
       .select('slot_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (fetchError) throw fetchError;
@@ -75,7 +123,7 @@ export async function DELETE(
     const { error: deleteError } = await supabaseAdmin
       .from('appointments')
       .delete()
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (deleteError) throw deleteError;
 
@@ -88,8 +136,8 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: 'Appointment deleted successfully' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting appointment:', error);
-    return NextResponse.json({ error: 'Failed to delete appointment' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to delete appointment' }, { status: 500 });
   }
 }

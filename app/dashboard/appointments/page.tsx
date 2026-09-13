@@ -296,15 +296,31 @@ export default function AppointmentsPage() {
     setUpdatingPaymentId(id);
     try {
       const newStatus = currentStatus === 'paid' ? 'unpaid' : 'paid';
+      const updatePayload: { payment_status: string; status?: string; updated_at: string } = {
+        payment_status: newStatus,
+        updated_at: new Date().toISOString(),
+      };
+
+      // When payment status is changed to paid, automatically change status to confirmed
+      if (newStatus === 'paid') {
+        updatePayload.status = 'confirmed';
+      }
+
       const { error } = await supabase
         .from('appointments')
-        .update({ payment_status: newStatus })
+        .update(updatePayload)
         .eq('id', id);
 
       if (error) throw error;
 
       setSelectedAppointment(prev =>
-        prev && prev.id === id ? { ...prev, payment_status: newStatus } : prev
+        prev && prev.id === id
+          ? {
+              ...prev,
+              payment_status: newStatus,
+              ...(newStatus === 'paid' ? { status: 'confirmed' } : {}),
+            }
+          : prev
       );
 
       fetchData();
