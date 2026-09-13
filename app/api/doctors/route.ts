@@ -35,16 +35,108 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const {
+      password,
+      create_account = true,
+      ...rawDoctorData
+    } = body;
+
+    const email = (rawDoctorData.email || '').trim().toLowerCase();
+    const fullName = (rawDoctorData.full_name || '').trim();
+
+    if (!fullName) {
+      return NextResponse.json({ error: 'Full name is required' }, { status: 400 });
+    }
+    if (!email) {
+      return NextResponse.json({ error: 'Valid email is required' }, { status: 400 });
+    }
 
     // Get the role_id for doctor
     const { data: roleData } = await supabaseAdmin
       .from('roles')
       .select('id')
       .eq('role_name', 'doctor')
-      .single();
+      .maybeSingle();
+
+    let userId: string | null = null;
+
+    // Create auth account if requested or password provided
+    if (password && (create_account !== false)) {
+      if (typeof password !== 'string' || password.length < 6) {
+        return NextResponse.json(
+          { error: 'Password must be at least 6 characters long' },
+          { status: 400 }
+        );
+      }
+
+      // Check if user already exists in auth
+      let existingAuthUser: any = null;
+      try {
+        const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+          page: 1,
+          perPage: 200,
+        });
+
+        if (!listErr && list?.users) {
+          existingAuthUser = list.users.find(
+            (u) => u.email?.toLowerCase() === email
+          );
+        }
+      } catch (e) {
+        console.warn('Could not list users for email lookup:', e);
+      }
+
+      if (existingAuthUser) {
+        // Update password and metadata of existing auth user
+        const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
+          existingAuthUser.id,
+          {
+            password,
+            email_confirm: true,
+            user_metadata: {
+              role: 'doctor',
+              full_name: fullName,
+            },
+          }
+        );
+
+        if (updErr) {
+          console.error('Error updating existing doctor auth user:', updErr);
+          return NextResponse.json(
+            { error: updErr.message || 'Failed to update credentials' },
+            { status: 500 }
+          );
+        }
+        userId = existingAuthUser.id;
+      } else {
+        // Create new auth user
+        const { data: authData, error: authError } =
+          await supabaseAdmin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: {
+              role: 'doctor',
+              full_name: fullName,
+            },
+          });
+
+        if (authError) {
+          console.error('Error creating doctor auth user:', authError);
+          return NextResponse.json(
+            { error: authError.message || 'Failed to create auth account' },
+            { status: 500 }
+          );
+        }
+        userId = authData.user.id;
+      }
+    }
 
     const doctorData = {
-      ...body,
+      ...rawDoctorData,
+      email,
+      full_name: fullName,
+      user_id: userId,
       role_id: roleData?.id || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -58,9 +150,18 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json(doctor, { status: 201 });
-  } catch (error) {
+    return NextResponse.json(
+      {
+        ...doctor,
+        account_created: !!userId,
+      },
+      { status: 201 }
+    );
+  } catch (error: any) {
     console.error('Error creating doctor:', error);
-    return NextResponse.json({ error: 'Failed to create doctor' }, { status: 500 });
+    return NextResponse.json(
+      { error: error?.message || 'Failed to create doctor' },
+      { status: 500 }
+    );
   }
 }
