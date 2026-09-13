@@ -4,6 +4,32 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase-client';
+import {
+  Calendar,
+  Clock,
+  Search,
+  Filter,
+  Plus,
+  Printer,
+  Eye,
+  X,
+  Check,
+  AlertCircle,
+  CheckCircle2,
+  User,
+  Stethoscope,
+  Phone,
+  Mail,
+  IndianRupee,
+  CreditCard,
+  ChevronDown,
+  Sparkles,
+  Building2,
+  UserPlus,
+  Activity,
+  ArrowRight,
+  ShieldCheck,
+} from 'lucide-react';
 
 interface CurrentUser {
   id: string;
@@ -864,183 +890,394 @@ export default function AppointmentsPage() {
     );
   }
 
+  const totalCount = appointments.length;
+  const pendingCount = appointments.filter(a => a.status === 'pending').length;
+  const confirmedCount = appointments.filter(a => a.status === 'confirmed').length;
+  const completedCount = appointments.filter(a => a.status === 'completed').length;
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
-          {currentUser?.role === 'doctor' ? 'My Appointments' : 'Appointments'}
-        </h1>
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              {currentUser?.role === 'doctor' ? 'My Consultations' : 'Appointments Desk'}
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+              Live Dispatch
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 mt-1">
+            {currentUser?.role === 'doctor'
+              ? 'View patient queue, consulting schedule, and print clinical OPD slips.'
+              : 'Review upcoming visits, patient bookings, payment statuses, and OPD printouts.'}
+          </p>
+        </div>
+
         {(currentUser?.role === 'admin' || currentUser?.role === 'receptionist') && (
           <button
             onClick={() => setShowAddModal(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold transition-all shadow-sm hover:shadow active:scale-[0.99]"
           >
-            + New Appointment
+            <Plus className="w-4 h-4" />
+            <span>New Appointment</span>
           </button>
         )}
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex gap-4">
-          <input
-            type="text"
-            placeholder="Search appointments..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 border rounded px-3 py-2"
-          />
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="border rounded px-3 py-2"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <select
-            value={filterPayment}
-            onChange={(e) => setFilterPayment(e.target.value)}
-            className="border rounded px-3 py-2"
-          >
-            <option value="all">All Payments</option>
-            <option value="paid">Paid</option>
-            <option value="unpaid">Unpaid</option>
-            <option value="refunded">Refunded</option>
-          </select>
+      {/* ── 4 KPI Summary Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Bookings</p>
+            <p className="text-2xl font-bold text-slate-900 mt-1">{totalCount}</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+            <Calendar className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Pending Action</p>
+            <p className="text-2xl font-bold text-amber-600 mt-1">{pendingCount}</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Confirmed</p>
+            <p className="text-2xl font-bold text-emerald-600 mt-1">{confirmedCount}</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-teal-700 uppercase tracking-wider">Completed</p>
+            <p className="text-2xl font-bold text-teal-600 mt-1">{completedCount}</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
+            <Activity className="w-5 h-5" />
+          </div>
         </div>
       </div>
 
-      {/* Appointments Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* ── Search and Filter Toolbar ── */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
+        <div className="flex flex-col md:flex-row gap-3">
+          {/* Search Box */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by patient name, phone, token #, or doctor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-200 text-slate-400"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Status Filter */}
+          <div className="relative min-w-[160px]">
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full pl-3 pr-8 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors appearance-none cursor-pointer"
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">🟡 Pending</option>
+              <option value="confirmed">🟢 Confirmed</option>
+              <option value="completed">🔵 Completed</option>
+              <option value="cancelled">🔴 Cancelled</option>
+            </select>
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* Payment Filter */}
+          <div className="relative min-w-[160px]">
+            <select
+              value={filterPayment}
+              onChange={(e) => setFilterPayment(e.target.value)}
+              className="w-full pl-3 pr-8 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors appearance-none cursor-pointer"
+            >
+              <option value="all">All Payments</option>
+              <option value="paid">✓ Paid</option>
+              <option value="unpaid">✕ Unpaid</option>
+              <option value="refunded">↺ Refunded</option>
+            </select>
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Active search/filter info strip */}
+        {(searchTerm || filterStatus !== 'all' || filterPayment !== 'all') && (
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>
+              Showing <strong>{filteredAppointments.length}</strong> matching results
+            </span>
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setFilterStatus('all');
+                setFilterPayment('all');
+              }}
+              className="text-teal-600 hover:text-teal-700 font-semibold"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Appointments Table ── */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Appointment #</th>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/80 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100">
+                <th className="py-3.5 px-5">Token / Booking #</th>
                 {currentUser?.role !== 'doctor' && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doctor</th>
+                  <th className="py-3.5 px-5">Attending Doctor</th>
                 )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date & Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="py-3.5 px-5">Patient Details</th>
+                <th className="py-3.5 px-5">Consulting Slot</th>
+                <th className="py-3.5 px-5">Status</th>
+                <th className="py-3.5 px-5">Payment Status</th>
+                <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredAppointments.map((appointment) => (
-                <tr key={appointment.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium">{appointment.appointment_number}</td>
-                  {currentUser?.role !== 'doctor' && (
-                    <td className="px-6 py-4">
-                      {doctors.find(d => d.id === appointment.doctor_id)?.full_name}
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {filteredAppointments.map((appointment) => {
+                const patient = patients.find((p) => p.id === appointment.patient_id);
+                const doctor = doctors.find((d) => d.id === appointment.doctor_id);
+                const patientName = patient?.full_name || 'Patient Record';
+                const initials = patientName
+                  .split(' ')
+                  .map((w) => w[0])
+                  .slice(0, 2)
+                  .join('')
+                  .toUpperCase();
+
+                return (
+                  <tr key={appointment.id} className="hover:bg-slate-50/70 transition-colors">
+                    {/* Token / Booking # */}
+                    <td className="py-4 px-5">
+                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 font-mono text-xs font-bold">
+                        #{appointment.appointment_number}
+                      </div>
                     </td>
-                  )}
-                  <td className="px-6 py-4">
-                    {patients.find(p => p.id === appointment.patient_id)?.full_name}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>{appointment.appointment_date}</div>
-                    <div className="text-sm text-gray-500">{appointment.appointment_time}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <select
-                      value={appointment.status}
-                      onChange={(e) => updateAppointmentStatus(appointment.id, e.target.value)}
-                      className={`border rounded px-2 py-1 text-xs font-medium ${
-                        appointment.status === 'confirmed' ? 'bg-green-100 text-green-800 border-green-300' :
-                        appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
-                        appointment.status === 'completed' ? 'bg-blue-100 text-blue-800 border-blue-300' :
-                        'bg-red-100 text-red-800 border-red-300'
-                      }`}
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">₹{appointment.payment_amount || 0}</div>
-                      <button
-                        onClick={() => togglePaymentStatus(appointment.id, appointment.payment_status)}
-                        disabled={updatingPaymentId === appointment.id}
-                        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors focus:outline-none ${
-                          appointment.payment_status === 'paid' ? 'bg-green-500' : 'bg-gray-300'
-                        } ${updatingPaymentId === appointment.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+
+                    {/* Doctor */}
+                    {currentUser?.role !== 'doctor' && (
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                            <Stethoscope className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-slate-900 text-sm truncate">
+                              {doctor ? `Dr. ${doctor.full_name}` : 'Assigned Doctor'}
+                            </p>
+                            <p className="text-xs text-slate-500 truncate">
+                              {doctor?.specialization || 'OPD Consultant'}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                    )}
+
+                    {/* Patient */}
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center font-bold text-teal-700 text-xs shrink-0">
+                          {initials}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-900 text-sm truncate">{patientName}</p>
+                          <p className="text-xs text-slate-500 truncate">
+                            {patient?.phone || 'No phone recorded'}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Date & Time */}
+                    <td className="py-4 px-5 whitespace-nowrap">
+                      <div className="flex items-center gap-2 text-slate-700 font-medium text-xs">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>{appointment.appointment_date}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-500 text-xs mt-1">
+                        <Clock className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                        <span>{appointment.appointment_time}</span>
+                      </div>
+                    </td>
+
+                    {/* Status dropdown */}
+                    <td className="py-4 px-5">
+                      <select
+                        value={appointment.status}
+                        onChange={(e) => updateAppointmentStatus(appointment.id, e.target.value)}
+                        className={`border rounded-lg px-2.5 py-1 text-xs font-semibold cursor-pointer appearance-none transition-colors ${
+                          appointment.status === 'confirmed'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/70'
+                            : appointment.status === 'pending'
+                            ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/70'
+                            : appointment.status === 'completed'
+                            ? 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100/70'
+                            : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100/70'
+                        }`}
                       >
+                        <option value="pending">🟡 Pending</option>
+                        <option value="confirmed">🟢 Confirmed</option>
+                        <option value="completed">🔵 Completed</option>
+                        <option value="cancelled">🔴 Cancelled</option>
+                      </select>
+                    </td>
+
+                    {/* Payment Status with toggle */}
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-bold text-slate-900 text-sm">
+                          ₹{appointment.payment_amount || 0}
+                        </span>
+
+                        <button
+                          onClick={() => togglePaymentStatus(appointment.id, appointment.payment_status)}
+                          disabled={updatingPaymentId === appointment.id}
+                          className={`relative inline-flex items-center h-5 w-9 rounded-full transition-colors focus:outline-none ${
+                            appointment.payment_status === 'paid' ? 'bg-emerald-500' : 'bg-slate-300'
+                          } ${updatingPaymentId === appointment.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                          title="Click to toggle payment status (Paid automatically confirms)"
+                        >
+                          <span
+                            className={`inline-block w-3.5 h-3.5 transform rounded-full bg-white shadow transition-transform ${
+                              appointment.payment_status === 'paid' ? 'translate-x-4.5' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+
                         <span
-                          className={`inline-block w-4 h-4 transform rounded-full bg-white shadow transition-transform ${
-                            appointment.payment_status === 'paid' ? 'translate-x-6' : 'translate-x-1'
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                            appointment.payment_status === 'paid'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : appointment.payment_status === 'unpaid'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-slate-100 text-slate-600 border border-slate-200'
                           }`}
-                        />
-                      </button>
-                      <span className={`text-xs font-medium ${
-                        appointment.payment_status === 'paid' ? 'text-green-600' :
-                        appointment.payment_status === 'unpaid' ? 'text-red-600' :
-                        'text-gray-600'
-                      }`}>
-                        {appointment.payment_status}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2 items-center">
-                      <button
-                        onClick={() => {
-                          setSelectedAppointment(appointment);
-                          setShowDetailsModal(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => printOPD(appointment)}
-                        className="text-green-600 hover:text-green-900"
-                        title="Print OPD"
-                      >
-                        🖨️
-                      </button>
-                    </div>
+                        >
+                          {appointment.payment_status}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-4 px-5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {/* View Details */}
+                        <button
+                          onClick={() => {
+                            setSelectedAppointment(appointment);
+                            setShowDetailsModal(true);
+                          }}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+
+                        {/* Print OPD Slip */}
+                        <button
+                          onClick={() => printOPD(appointment)}
+                          className="p-1.5 rounded-lg text-teal-600 hover:text-teal-700 hover:bg-teal-50 transition-colors"
+                          title="Print Hospital OPD Slip"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {filteredAppointments.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={currentUser?.role !== 'doctor' ? 7 : 6}
+                    className="py-12 text-center text-slate-500"
+                  >
+                    <Calendar className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                    <p className="font-semibold text-slate-700">No appointments found</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Try adjusting your search query or filter criteria.
+                    </p>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Add Appointment Modal */}
+      {/* ── Add Appointment Modal ── */}
       {showAddModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setShowAddModal(false)}
         >
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
 
           <div
-            className="relative bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl"
+            className="relative bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
-            <h2 className="text-xl font-bold mb-4">New Appointment</h2>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">New Consultation Appointment</h2>
+                  <p className="text-xs text-slate-500">Book patient visit into the OPD system</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
             <div className="space-y-4">
               {/* Doctor Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Doctor *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Consulting Doctor *
+                </label>
                 <select
                   value={newAppointment.doctor_id}
                   onChange={(e) => {
                     const doctorId = e.target.value;
-                    const selectedDoctor = doctors.find(d => d.id === doctorId);
+                    const selectedDoctor = doctors.find((d) => d.id === doctorId);
                     let fee = 0;
 
                     if (selectedDoctor) {
@@ -1057,12 +1294,12 @@ export default function AppointmentsPage() {
                       payment_amount: fee,
                     });
                   }}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                 >
                   <option value="">Select Doctor</option>
-                  {doctors.map(doc => (
+                  {doctors.map((doc) => (
                     <option key={doc.id} value={doc.id}>
-                      {doc.full_name} - {doc.specialization} (₹{doc.consultation_fee})
+                      Dr. {doc.full_name} — {doc.specialization || 'Consultant'} (Fee: ₹{doc.consultation_fee || 0})
                     </option>
                   ))}
                 </select>
@@ -1070,7 +1307,9 @@ export default function AppointmentsPage() {
 
               {/* Patient Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Patient *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Patient *
+                </label>
 
                 <div className="flex gap-2 mb-2">
                   <button
@@ -1080,8 +1319,10 @@ export default function AppointmentsPage() {
                       setSelectedPatient(null);
                       setNewAppointment({ ...newAppointment, patient_id: '' });
                     }}
-                    className={`px-3 py-1.5 text-sm rounded-lg ${
-                      !showNewPatientForm ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                      !showNewPatientForm
+                        ? 'bg-teal-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
                     Existing Patient
@@ -1093,35 +1334,37 @@ export default function AppointmentsPage() {
                       setSelectedPatient(null);
                       setNewAppointment({ ...newAppointment, patient_id: '' });
                     }}
-                    className={`px-3 py-1.5 text-sm rounded-lg ${
-                      showNewPatientForm ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                      showNewPatientForm
+                        ? 'bg-teal-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
-                    + New Patient
+                    + Register New Patient
                   </button>
                 </div>
 
                 {!showNewPatientForm && (
                   <div>
                     <div className="relative">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
-                        placeholder="Search patient by name, phone, or email..."
+                        placeholder="Search patient by full name, phone number, or email..."
                         value={patientSearchTerm}
                         onChange={(e) => {
                           setPatientSearchTerm(e.target.value);
                           setShowPatientSearch(true);
                         }}
                         onFocus={() => setShowPatientSearch(true)}
-                        className="w-full border rounded px-3 py-2 pl-10"
+                        className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                       />
-                      <span className="absolute left-3 top-2.5">🔍</span>
                     </div>
 
                     {showPatientSearch && patientSearchTerm && (
-                      <div className="mt-1 border rounded-lg max-h-40 overflow-y-auto">
+                      <div className="mt-1 border border-slate-200 rounded-xl max-h-40 overflow-y-auto bg-white shadow-lg divide-y divide-slate-100">
                         {filteredPatients.length > 0 ? (
-                          filteredPatients.map(patient => (
+                          filteredPatients.map((patient) => (
                             <button
                               key={patient.id}
                               type="button"
@@ -1131,68 +1374,73 @@ export default function AppointmentsPage() {
                                 setPatientSearchTerm(patient.full_name);
                                 setShowPatientSearch(false);
                               }}
-                              className="w-full text-left px-3 py-2 hover:bg-blue-50 flex items-center justify-between"
+                              className="w-full text-left px-3.5 py-2 hover:bg-teal-50/60 flex items-center justify-between text-xs"
                             >
                               <div>
-                                <p className="font-medium">{patient.full_name}</p>
-                                <p className="text-xs text-gray-500">{patient.phone} | {patient.email}</p>
+                                <p className="font-semibold text-slate-900">{patient.full_name}</p>
+                                <p className="text-slate-500">{patient.phone} | {patient.email || 'No email'}</p>
                               </div>
                               {selectedPatient?.id === patient.id && (
-                                <span className="text-green-500">✓</span>
+                                <span className="text-teal-600 font-bold">✓</span>
                               )}
                             </button>
                           ))
                         ) : (
-                          <div className="px-3 py-2 text-sm text-gray-500">
-                            No patients found. Click &quot;New Patient&quot; to create one.
+                          <div className="px-3.5 py-3 text-xs text-slate-500">
+                            No patients found. Click &quot;Register New Patient&quot; above to create one.
                           </div>
                         )}
                       </div>
                     )}
 
                     {selectedPatient && (
-                      <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="font-medium text-green-800">{selectedPatient.full_name}</p>
-                        <p className="text-sm text-green-600">{selectedPatient.phone}</p>
+                      <div className="mt-2 p-3 bg-teal-50/70 border border-teal-200 rounded-xl flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-teal-900 text-sm">{selectedPatient.full_name}</p>
+                          <p className="text-xs text-teal-700">{selectedPatient.phone || 'No phone'}</p>
+                        </div>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">
+                          Selected
+                        </span>
                       </div>
                     )}
                   </div>
                 )}
 
                 {showNewPatientForm && (
-                  <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <input
                       type="text"
                       placeholder="Full Name *"
                       value={newPatient.full_name}
                       onChange={(e) => setNewPatient({ ...newPatient, full_name: e.target.value })}
-                      className="border rounded px-3 py-2"
+                      className="border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs"
                     />
                     <input
                       type="text"
                       placeholder="Phone *"
                       value={newPatient.phone}
                       onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                      className="border rounded px-3 py-2"
+                      className="border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs"
                     />
                     <input
                       type="email"
                       placeholder="Email"
                       value={newPatient.email}
                       onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
-                      className="border rounded px-3 py-2"
+                      className="border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs"
                     />
                     <input
                       type="date"
                       placeholder="Date of Birth"
                       value={newPatient.date_of_birth}
                       onChange={(e) => setNewPatient({ ...newPatient, date_of_birth: e.target.value })}
-                      className="border rounded px-3 py-2"
+                      className="border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs"
                     />
                     <select
                       value={newPatient.gender}
                       onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
-                      className="border rounded px-3 py-2"
+                      className="border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs"
                     >
                       <option value="">Gender</option>
                       <option value="Male">Male</option>
@@ -1201,73 +1449,80 @@ export default function AppointmentsPage() {
                     </select>
                     <input
                       type="text"
-                      placeholder="Blood Group"
+                      placeholder="Blood Group (e.g. B+)"
                       value={newPatient.blood_group}
                       onChange={(e) => setNewPatient({ ...newPatient, blood_group: e.target.value })}
-                      className="border rounded px-3 py-2"
+                      className="border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs"
                     />
                     <input
                       type="text"
                       placeholder="Address"
                       value={newPatient.address}
                       onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
-                      className="border rounded px-3 py-2 col-span-2"
+                      className="border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs col-span-2"
                     />
                     <input
                       type="text"
                       placeholder="City"
                       value={newPatient.city}
                       onChange={(e) => setNewPatient({ ...newPatient, city: e.target.value })}
-                      className="border rounded px-3 py-2"
+                      className="border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs"
                     />
                     <input
                       type="text"
                       placeholder="State"
                       value={newPatient.state}
                       onChange={(e) => setNewPatient({ ...newPatient, state: e.target.value })}
-                      className="border rounded px-3 py-2"
+                      className="border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs"
                     />
                     <button
                       type="button"
                       onClick={createPatient}
-                      className="col-span-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                      className="col-span-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-xs"
                     >
-                      Save Patient
+                      Save & Select Patient
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Appointment Details */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Appointment Date & Time */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Date *
+                  </label>
                   <input
                     type="date"
                     value={newAppointment.appointment_date}
                     onChange={(e) => setNewAppointment({ ...newAppointment, appointment_date: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Time *</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Time *
+                  </label>
                   <input
                     type="time"
                     value={newAppointment.appointment_time}
                     onChange={(e) => setNewAppointment({ ...newAppointment, appointment_time: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Type & Fees */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Visit Type
+                  </label>
                   <select
                     value={newAppointment.appointment_type}
                     onChange={(e) => {
                       const type = e.target.value;
-                      const selectedDoctor = doctors.find(d => d.id === newAppointment.doctor_id);
+                      const selectedDoctor = doctors.find((d) => d.id === newAppointment.doctor_id);
                       let fee = 0;
 
                       if (selectedDoctor) {
@@ -1284,64 +1539,75 @@ export default function AppointmentsPage() {
                         payment_amount: fee,
                       });
                     }}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                   >
-                    <option value="consultation">Consultation</option>
-                    <option value="follow_up">Follow-up</option>
-                    <option value="emergency">Emergency</option>
+                    <option value="consultation">Initial Consultation</option>
+                    <option value="follow_up">Follow-up Visit</option>
+                    <option value="emergency">Emergency OPD</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fees (Auto-calculated)</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Consultation Fee (₹)
+                  </label>
                   <input
                     type="number"
                     value={newAppointment.payment_amount}
-                    className="w-full border rounded px-3 py-2 bg-gray-50"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800"
                     readOnly
                   />
                 </div>
               </div>
 
+              {/* Payment Method */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Payment Method
+                </label>
                 <select
                   value={newAppointment.payment_method}
                   onChange={(e) => setNewAppointment({ ...newAppointment, payment_method: e.target.value })}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                 >
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
-                  <option value="upi">UPI</option>
-                  <option value="insurance">Insurance</option>
+                  <option value="cash">Cash (Counter)</option>
+                  <option value="upi">UPI / QR Code</option>
+                  <option value="card">Debit / Credit Card</option>
+                  <option value="insurance">TPA / Health Insurance</option>
                 </select>
               </div>
 
+              {/* Symptoms */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Symptoms</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Presenting Symptoms / Chief Complaints
+                </label>
                 <textarea
-                  placeholder="Symptoms"
+                  placeholder="e.g. Fever, coughing, routine follow-up"
                   value={newAppointment.symptoms}
                   onChange={(e) => setNewAppointment({ ...newAppointment, symptoms: e.target.value })}
-                  className="w-full border rounded px-3 py-2"
-                  rows={3}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                  rows={2}
                 />
               </div>
 
-              <div className="flex justify-end gap-2">
+              {/* Actions */}
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
+                  type="button"
                   onClick={() => {
                     setShowAddModal(false);
                     setSelectedPatient(null);
                     setShowNewPatientForm(false);
                     setPatientSearchTerm('');
                   }}
-                  className="px-4 py-2 border rounded hover:bg-gray-50"
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50"
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={createAppointment}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold shadow-xs transition-colors"
                 >
                   Create Appointment
                 </button>
@@ -1351,70 +1617,103 @@ export default function AppointmentsPage() {
         </div>
       )}
 
-      {/* Details Modal */}
+      {/* ── Details Modal ── */}
       {showDetailsModal && selectedAppointment && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setShowDetailsModal(false)}
         >
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
 
           <div
-            className="relative bg-white rounded-lg p-6 w-full max-w-lg shadow-xl"
+            className="relative bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-slate-100"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
-            <h2 className="text-xl font-bold mb-4">Appointment Details</h2>
-            <div className="space-y-3">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
               <div>
-                <p className="text-sm text-gray-500">Appointment Number</p>
-                <p className="font-medium">{selectedAppointment.appointment_number}</p>
+                <h2 className="text-lg font-bold text-slate-900">Appointment Overview</h2>
+                <p className="text-xs text-slate-500">Token #{selectedAppointment.appointment_number}</p>
               </div>
-              <div className="flex items-center justify-between">
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-sm">
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
                 <div>
-                  <p className="text-sm text-gray-500">Payment Status</p>
-                  <p className="font-medium">{selectedAppointment.payment_status}</p>
+                  <p className="text-xs text-slate-500">Token Number</p>
+                  <p className="font-mono font-bold text-slate-900 mt-0.5">#{selectedAppointment.appointment_number}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Date & Time</p>
+                  <p className="font-medium text-slate-800 mt-0.5">
+                    {selectedAppointment.appointment_date} at {selectedAppointment.appointment_time}
+                  </p>
+                </div>
+              </div>
+
+              {/* Payment toggle */}
+              <div className="flex items-center justify-between p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl">
+                <div>
+                  <p className="text-xs font-semibold text-emerald-800">Payment Status</p>
+                  <p className="font-bold text-emerald-900 text-sm mt-0.5 capitalize">
+                    {selectedAppointment.payment_status} (₹{selectedAppointment.payment_amount || 0})
+                  </p>
+                  <p className="text-[11px] text-emerald-700 mt-0.5">
+                    Marking Paid automatically confirms booking
+                  </p>
                 </div>
                 <button
                   onClick={() => togglePaymentStatus(selectedAppointment.id, selectedAppointment.payment_status)}
                   disabled={updatingPaymentId === selectedAppointment.id}
-                  className={`relative inline-flex items-center h-7 w-12 rounded-full transition-colors ${
-                    selectedAppointment.payment_status === 'paid' ? 'bg-green-500' : 'bg-gray-300'
+                  className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors cursor-pointer ${
+                    selectedAppointment.payment_status === 'paid' ? 'bg-emerald-600' : 'bg-slate-300'
                   }`}
                 >
                   <span
-                    className={`inline-block w-5 h-5 transform rounded-full bg-white shadow transition-transform ${
+                    className={`inline-block w-4 h-4 transform rounded-full bg-white shadow transition-transform ${
                       selectedAppointment.payment_status === 'paid' ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Payment Amount</p>
-                <p className="font-medium">₹{selectedAppointment.payment_amount || 0}</p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <p className="text-xs text-slate-500">Payment Method</p>
+                  <p className="font-semibold text-slate-800 mt-0.5 capitalize">{selectedAppointment.payment_method || 'N/A'}</p>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <p className="text-xs text-slate-500">Appointment Type</p>
+                  <p className="font-semibold text-slate-800 mt-0.5 capitalize">{selectedAppointment.appointment_type || 'Consultation'}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Payment Method</p>
-                <p className="font-medium">{selectedAppointment.payment_method || 'N/A'}</p>
-              </div>
+
               {selectedAppointment.symptoms && (
-                <div>
-                  <p className="text-sm text-gray-500">Symptoms</p>
-                  <p>{selectedAppointment.symptoms}</p>
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <p className="text-xs text-slate-500">Symptoms</p>
+                  <p className="text-slate-800 text-xs mt-1">{selectedAppointment.symptoms}</p>
                 </div>
               )}
             </div>
-            <div className="flex gap-2 mt-4">
+
+            <div className="flex gap-2.5 mt-5 pt-4 border-t border-slate-100">
               <button
                 onClick={() => printOPD(selectedAppointment)}
-                className="flex-1 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm rounded-xl shadow-xs transition-colors"
               >
-                🖨️ Print OPD
+                <Printer className="w-4 h-4" />
+                <span>Print OPD Slip</span>
               </button>
               <button
                 onClick={() => setShowDetailsModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition-colors"
               >
                 Close
               </button>

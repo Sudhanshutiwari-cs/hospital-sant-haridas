@@ -1,9 +1,27 @@
 // app/dashboard/slots/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase-client';
+import {
+  Calendar,
+  Clock,
+  Sparkles,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  RefreshCw,
+  Layers,
+  ChevronRight,
+  Stethoscope,
+  X,
+  Check,
+  CalendarDays,
+  SlidersHorizontal,
+  Info,
+} from 'lucide-react';
 
 interface DoctorSlot {
   id: string;
@@ -36,13 +54,13 @@ interface DoctorSchedule {
 }
 
 const DOW = [
-  { label: 'Sun', value: 0 },
-  { label: 'Mon', value: 1 },
-  { label: 'Tue', value: 2 },
-  { label: 'Wed', value: 3 },
-  { label: 'Thu', value: 4 },
-  { label: 'Fri', value: 5 },
-  { label: 'Sat', value: 6 },
+  { label: 'Sun', full: 'Sunday', value: 0 },
+  { label: 'Mon', full: 'Monday', value: 1 },
+  { label: 'Tue', full: 'Tuesday', value: 2 },
+  { label: 'Wed', full: 'Wednesday', value: 3 },
+  { label: 'Thu', full: 'Thursday', value: 4 },
+  { label: 'Fri', full: 'Friday', value: 5 },
+  { label: 'Sat', full: 'Saturday', value: 6 },
 ];
 
 const toMin = (t: string) => {
@@ -66,7 +84,9 @@ export default function SlotsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [filterDoctor, setFilterDoctor] = useState('all');
   const [filterDate, setFilterDate] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'booked' | 'disabled'>('all');
   const [generating, setGenerating] = useState(false);
+  const [actionSlotId, setActionSlotId] = useState<string | null>(null);
 
   const [bulk, setBulk] = useState({
     doctor_id: '',
@@ -117,7 +137,6 @@ export default function SlotsPage() {
   };
 
   // Compute effective day window = intersection of user input and doctor's schedule
-  // Also exclude doctor's break window
   const computeDayWindow = (dow: number) => {
     const sch = schedules.find(s => s.day_of_week === dow);
     if (!sch) return null;
@@ -152,7 +171,6 @@ export default function SlotsPage() {
       return;
     }
 
-    // Per selected day, compute how many slots would be created
     const perDayMap: Record<number, number> = {};
     const invalidDays: number[] = [];
 
@@ -170,7 +188,6 @@ export default function SlotsPage() {
         const slotEnd = cur + duration_minutes;
         const inBreak = window.breaks.some(b => cur < b.end && slotEnd > b.start);
         if (inBreak) {
-          // jump to end of the break that overlaps
           const overlapping = window.breaks.find(b => cur < b.end && slotEnd > b.start);
           cur = overlapping ? overlapping.end : slotEnd;
           continue;
@@ -191,7 +208,6 @@ export default function SlotsPage() {
       total += perDayMap[dow] || 0;
     }
 
-    // Show the *smallest* per-day count as "perDay" for display, or 0 if any invalid
     const validCounts = days_of_week
       .filter(d => !invalidDays.includes(d))
       .map(d => perDayMap[d] || 0);
@@ -277,7 +293,6 @@ export default function SlotsPage() {
     }));
   };
 
-  // Adjust working hours to fit inside doctor's schedule for the selected days
   const applySuggestionForDay = (dow: number) => {
     const sch = schedules.find(s => s.day_of_week === dow);
     if (!sch) return;
@@ -296,16 +311,16 @@ export default function SlotsPage() {
     if (generating) return;
 
     if (!bulk.start_date || !bulk.end_date) {
-      alert('Please pick a date range'); return;
+      alert('Please select a valid start and end date'); return;
     }
     if (bulk.end_date < bulk.start_date) {
       alert('End date must be after start date'); return;
     }
     if (bulk.days_of_week.length === 0) {
-      alert('Pick at least one day of the week'); return;
+      alert('Please pick at least one day of the week'); return;
     }
     if (toMin(bulk.day_end) <= toMin(bulk.day_start)) {
-      alert('End time must be after start time'); return;
+      alert('End time must be later than start time'); return;
     }
 
     const doctorId = currentUser?.role === 'doctor' ? currentUser.doctorId : bulk.doctor_id;
@@ -315,11 +330,11 @@ export default function SlotsPage() {
     const validDays = bulk.days_of_week.filter(d => scheduleDays.has(d));
 
     if (validDays.length === 0) {
-      alert('The doctor has no schedules for the selected days. Please add a schedule first.');
+      alert('The doctor has no configured schedules for the selected days. Please add a schedule first.');
       return;
     }
 
-    // Ensure each selected day actually has at least 1 slot after intersections
+    // Ensure each selected day has at least 1 slot
     const zeroDays: number[] = [];
     for (const d of validDays) {
       const w = computeDayWindow(d);
@@ -342,7 +357,7 @@ export default function SlotsPage() {
 
     if (zeroDays.length > 0) {
       const names = zeroDays.map(d => DOW.find(x => x.value === d)?.label).join(', ');
-      alert(`These days don't overlap with the doctor's schedule or have no room for slots: ${names}`);
+      alert(`These days do not fit within the doctor's active schedule window: ${names}`);
       return;
     }
 
@@ -365,158 +380,359 @@ export default function SlotsPage() {
       if (error) throw error;
 
       const result = data?.[0];
-      alert(`✅ Inserted ${result?.inserted_count ?? 0} slots. Skipped ${result?.skipped_count ?? 0} duplicates.`);
+      alert(`Successfully generated ${result?.inserted_count ?? 0} slots. (${result?.skipped_count ?? 0} duplicates skipped)`);
 
       setShowAddModal(false);
       fetchData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Bulk generate error:', err);
-      alert('Failed: ' + (err as any).message);
+      alert('Generation failed: ' + (err?.message || 'Unknown error'));
     } finally {
       setGenerating(false);
     }
   };
 
   const toggleSlotAvailability = async (id: string, currentStatus: boolean) => {
-    const { error } = await supabase
-      .from('doctor_slots')
-      .update({ is_available: !currentStatus })
-      .eq('id', id);
-    if (!error) fetchData();
+    setActionSlotId(id);
+    try {
+      const { error } = await supabase
+        .from('doctor_slots')
+        .update({ is_available: !currentStatus })
+        .eq('id', id);
+
+      if (!error) {
+        setSlots(prev => prev.map(s => s.id === id ? { ...s, is_available: !currentStatus } : s));
+      }
+    } finally {
+      setActionSlotId(null);
+    }
   };
 
-  const filteredSlots = slots.filter(slot => {
-    const matchesDoctor = filterDoctor === 'all' || slot.doctor_id === filterDoctor;
-    const matchesDate = filterDate === '' || slot.slot_date === filterDate;
-    return matchesDoctor && matchesDate;
-  });
+  // Metrics
+  const metrics = useMemo(() => {
+    const total = slots.length;
+    const booked = slots.filter(s => s.is_booked).length;
+    const available = slots.filter(s => !s.is_booked && s.is_available).length;
+    const disabled = slots.filter(s => !s.is_booked && !s.is_available).length;
+    return { total, booked, available, disabled };
+  }, [slots]);
+
+  const filteredSlots = useMemo(() => {
+    return slots.filter(slot => {
+      const matchesDoctor = filterDoctor === 'all' || slot.doctor_id === filterDoctor;
+      const matchesDate = filterDate === '' || slot.slot_date === filterDate;
+      let matchesStatus = true;
+      if (filterStatus === 'booked') matchesStatus = slot.is_booked;
+      else if (filterStatus === 'available') matchesStatus = !slot.is_booked && slot.is_available;
+      else if (filterStatus === 'disabled') matchesStatus = !slot.is_booked && !slot.is_available;
+
+      return matchesDoctor && matchesDate && matchesStatus;
+    });
+  }, [slots, filterDoctor, filterDate, filterStatus]);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="flex flex-col justify-center items-center h-80 gap-3">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-900 border-t-transparent"></div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Loading slots...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
-          {currentUser?.role === 'doctor' ? 'My Time Slots' : 'Time Slots'}
-        </h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          + Generate Slots
-        </button>
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex gap-4">
-          {currentUser?.role !== 'doctor' && (
-            <select
-              value={filterDoctor}
-              onChange={(e) => setFilterDoctor(e.target.value)}
-              className="border rounded px-3 py-2"
-            >
-              <option value="all">All Doctors</option>
-              {doctors.map(doc => (
-                <option key={doc.id} value={doc.id}>{doc.full_name}</option>
-              ))}
-            </select>
-          )}
-          <input
-            type="date"
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-            className="border rounded px-3 py-2"
-          />
+    <div className="space-y-6 pb-12">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            {currentUser?.role === 'doctor' ? 'My Time Slots' : 'Time Slots Management'}
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Generate, monitor, and regulate appointment availability windows.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium text-sm shadow-sm transition-all active:scale-[0.99]"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Generate Slots</span>
+          </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* KPI Cards Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <CalendarDays className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Slots</p>
+            <p className="text-2xl font-bold text-slate-900 mt-0.5">{metrics.total}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Available</p>
+            <p className="text-2xl font-bold text-emerald-600 mt-0.5">{metrics.available}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+            <Layers className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Booked</p>
+            <p className="text-2xl font-bold text-rose-600 mt-0.5">{metrics.booked}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Disabled</p>
+            <p className="text-2xl font-bold text-slate-700 mt-0.5">{metrics.disabled}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter & Control Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          {currentUser?.role !== 'doctor' && (
+            <div className="relative min-w-[200px]">
+              <Stethoscope className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={filterDoctor}
+                onChange={(e) => setFilterDoctor(e.target.value)}
+                aria-label="Filter by doctor"
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+              >
+                <option value="all">All Doctors</option>
+                {doctors.map(doc => (
+                  <option key={doc.id} value={doc.id}>{doc.full_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="relative min-w-[170px]">
+            <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+              aria-label="Filter by slot date"
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+            />
+          </div>
+
+          {/* Quick status tabs */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60 text-xs">
+            {(['all', 'available', 'booked', 'disabled'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setFilterStatus(tab)}
+                className={`px-3 py-1.5 rounded-lg capitalize font-medium transition-all ${
+                  filterStatus === tab
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {(filterDoctor !== 'all' || filterDate !== '' || filterStatus !== 'all') && (
+          <button
+            onClick={() => {
+              setFilterDoctor('all');
+              setFilterDate('');
+              setFilterStatus('all');
+            }}
+            className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1 self-center"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Reset filters
+          </button>
+        )}
+      </div>
+
+      {/* Slots Table */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/75 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
                 {currentUser?.role !== 'doctor' && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doctor</th>
+                  <th className="py-3 px-4">Doctor</th>
                 )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">End</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="py-3 px-4">Slot Date</th>
+                <th className="py-3 px-4">Time Window</th>
+                <th className="py-3 px-4">Type</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4 text-right">Toggle Availability</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredSlots.map((slot) => (
-                <tr key={slot.id} className="hover:bg-gray-50">
-                  {currentUser?.role !== 'doctor' && (
-                    <td className="px-6 py-4">
-                      {doctors.find(d => d.id === slot.doctor_id)?.full_name}
-                    </td>
-                  )}
-                  <td className="px-6 py-4">{slot.slot_date}</td>
-                  <td className="px-6 py-4">{slot.start_time}</td>
-                  <td className="px-6 py-4">{slot.end_time}</td>
-                  <td className="px-6 py-4">{slot.slot_type}</td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        slot.is_booked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                      }`}>
-                        {slot.is_booked ? 'Booked' : 'Available'}
-                      </span>
-                      {!slot.is_available && (
-                        <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-800 block w-fit">
-                          Disabled
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {!slot.is_booked && (
-                      <button
-                        onClick={() => toggleSlotAvailability(slot.id, slot.is_available)}
-                        className={`text-sm ${
-                          slot.is_available ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
-                        }`}
-                      >
-                        {slot.is_available ? 'Disable' : 'Enable'}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {filteredSlots.length === 0 && (
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {filteredSlots.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                    No slots found. Click <b>Generate Slots</b> to create a batch.
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                    <Calendar className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                    <p className="font-medium text-slate-600">No matching time slots found</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Adjust your date or doctor filters, or generate a new batch of slots.
+                    </p>
                   </td>
                 </tr>
+              ) : (
+                filteredSlots.map((slot) => {
+                  const doc = doctors.find(d => d.id === slot.doctor_id);
+
+                  return (
+                    <tr key={slot.id} className="hover:bg-slate-50/60 transition-colors">
+                      {currentUser?.role !== 'doctor' && (
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-blue-100/80 text-blue-700 flex items-center justify-center font-bold text-[11px]">
+                              {doc?.full_name ? doc.full_name.replace('Dr.', '').trim().charAt(0) : 'D'}
+                            </div>
+                            <span className="font-semibold text-slate-800">
+                              {doc?.full_name || 'Unassigned'}
+                            </span>
+                          </div>
+                        </td>
+                      )}
+
+                      <td className="py-3 px-4 text-slate-700 font-medium">
+                        {new Date(slot.slot_date + 'T00:00:00').toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold font-mono text-[11px]">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-medium text-[11px] capitalize ${
+                          slot.slot_type === 'consultation'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200/50'
+                            : slot.slot_type === 'emergency'
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200/50'
+                            : 'bg-purple-50 text-purple-700 border border-purple-200/50'
+                        }`}>
+                          {slot.slot_type.replace('_', ' ')}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        {slot.is_booked ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                            Booked
+                          </span>
+                        ) : slot.is_available ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Available
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                            Disabled
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-4 text-right">
+                        {slot.is_booked ? (
+                          <span className="text-[11px] text-slate-400 italic">Locked (Booked)</span>
+                        ) : (
+                          <button
+                            onClick={() => toggleSlotAvailability(slot.id, slot.is_available)}
+                            disabled={actionSlotId === slot.id}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                              slot.is_available
+                                ? 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200/60'
+                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
+                            }`}
+                          >
+                            {actionSlotId === slot.id ? (
+                              <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                            ) : slot.is_available ? (
+                              <>
+                                <XCircle className="w-3.5 h-3.5" />
+                                Disable
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Enable
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
 
+      {/* Bulk Generate Slots Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <h2 className="text-xl font-bold mb-4">Generate Time Slots</h2>
+        <div className="fixed inset-0 backdrop-blur-md bg-slate-900/40 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Generate Time Slots Batch</h2>
+                  <p className="text-xs text-slate-500">Auto-create multi-day consultation availability</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 pt-4">
               {currentUser?.role !== 'doctor' && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">Doctor</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Select Doctor <span className="text-rose-500">*</span>
+                  </label>
                   <select
                     value={bulk.doctor_id}
                     onChange={(e) => setBulk({ ...bulk, doctor_id: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select Doctor</option>
                     {doctors.map(doc => (
@@ -527,14 +743,18 @@ export default function SlotsPage() {
               )}
 
               {bulk.doctor_id && (
-                <div className="bg-gray-50 border border-gray-200 rounded p-3 text-xs">
-                  <div className="font-medium text-gray-700 mb-2">Doctor's Weekly Schedule</div>
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-slate-800">Doctor's Active Weekly Schedules</span>
+                    <span className="text-[11px] text-slate-500">Click a day to sync hours</span>
+                  </div>
                   {schedules.length === 0 ? (
-                    <div className="text-red-600">
-                      ⚠️ No schedules found for this doctor. Please add a schedule first.
+                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/70 text-amber-800 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>No active schedules found for this doctor. Please configure weekly schedule first.</span>
                     </div>
                   ) : (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5">
                       {DOW.map(d => {
                         const sch = schedules.find(s => s.day_of_week === d.value);
                         return (
@@ -543,22 +763,16 @@ export default function SlotsPage() {
                             type="button"
                             onClick={() => sch && applySuggestionForDay(d.value)}
                             disabled={!sch}
-                            title={sch ? 'Click to auto-fill working hours from this day' : 'No schedule'}
-                            className={`px-2 py-1 rounded text-left ${
+                            className={`px-2.5 py-1.5 rounded-xl text-left border transition-all text-[11px] ${
                               sch
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer'
-                                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                ? 'bg-emerald-50 text-emerald-900 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 cursor-pointer'
+                                : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
                             }`}
                           >
-                            <span className="font-medium">{d.label}</span>
+                            <span className="font-bold">{d.label}</span>
                             {sch && (
-                              <span className="ml-1">
+                              <span className="ml-1 text-[10px] text-emerald-700 font-mono">
                                 {sch.start_time.slice(0, 5)}-{sch.end_time.slice(0, 5)}
-                                {sch.break_start_time && sch.break_end_time && (
-                                  <span className="ml-1 text-green-600">
-                                    (break {sch.break_start_time.slice(0, 5)}-{sch.break_end_time.slice(0, 5)})
-                                  </span>
-                                )}
                               </span>
                             )}
                           </button>
@@ -566,19 +780,18 @@ export default function SlotsPage() {
                       })}
                     </div>
                   )}
-                  <div className="mt-2 text-gray-500">
-                    Tip: click a day to auto-fill the working hours below.
-                  </div>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Slot Type</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Slot Type
+                  </label>
                   <select
                     value={bulk.slot_type}
                     onChange={(e) => setBulk({ ...bulk, slot_type: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="consultation">Consultation</option>
                     <option value="follow_up">Follow-up</option>
@@ -586,11 +799,13 @@ export default function SlotsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Duration</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Slot Duration
+                  </label>
                   <select
                     value={bulk.duration_minutes}
                     onChange={(e) => setBulk({ ...bulk, duration_minutes: Number(e.target.value) })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value={15}>15 minutes</option>
                     <option value={20}>20 minutes</option>
@@ -601,35 +816,39 @@ export default function SlotsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Start Date</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Start Date <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="date"
                     value={bulk.start_date}
                     onChange={(e) => setBulk({ ...bulk, start_date: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">End Date</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    End Date <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="date"
                     value={bulk.end_date}
                     onChange={(e) => setBulk({ ...bulk, end_date: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                   Days of Week
-                  <span className="text-xs text-gray-500 ml-2">
-                    (only days with schedules are selectable)
+                  <span className="text-[10px] text-slate-400 font-normal ml-2">
+                    (Days with schedules are highlighted)
                   </span>
                 </label>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-1.5 flex-wrap">
                   {DOW.map(d => {
                     const hasSchedule = schedules.some(s => s.day_of_week === d.value);
                     const isSelected = bulk.days_of_week.includes(d.value);
@@ -639,13 +858,12 @@ export default function SlotsPage() {
                         type="button"
                         onClick={() => toggleDay(d.value)}
                         disabled={!hasSchedule}
-                        title={!hasSchedule ? 'No schedule for this day' : ''}
-                        className={`px-3 py-1 rounded border text-sm ${
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
                           isSelected
-                            ? 'bg-blue-500 text-white border-blue-500'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                             : hasSchedule
-                              ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                              : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                            ? 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50'
                         }`}
                       >
                         {d.label}
@@ -655,123 +873,125 @@ export default function SlotsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Working Hours From</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Shift Start Time
+                  </label>
                   <input
                     type="time"
                     value={bulk.day_start}
                     onChange={(e) => setBulk({ ...bulk, day_start: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Working Hours To</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Shift End Time
+                  </label>
                   <input
                     type="time"
                     value={bulk.day_end}
                     onChange={(e) => setBulk({ ...bulk, day_end: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium mb-2">
+              {/* Break Window */}
+              <div className="bg-slate-50/75 p-3 rounded-2xl border border-slate-200/60">
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={bulk.use_break}
                     onChange={(e) => setBulk({ ...bulk, use_break: e.target.checked })}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
                   />
-                  Add a break window
+                  Exclude Break Window from Slots
                 </label>
                 {bulk.use_break && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <input
-                      type="time"
-                      value={bulk.break_start}
-                      onChange={(e) => setBulk({ ...bulk, break_start: e.target.value })}
-                      className="border rounded px-3 py-2"
-                    />
-                    <input
-                      type="time"
-                      value={bulk.break_end}
-                      onChange={(e) => setBulk({ ...bulk, break_end: e.target.value })}
-                      className="border rounded px-3 py-2"
-                    />
+                  <div className="grid grid-cols-2 gap-3 mt-2.5">
+                    <div>
+                      <span className="text-[10px] text-slate-500">Break Start</span>
+                      <input
+                        type="time"
+                        value={bulk.break_start}
+                        onChange={(e) => setBulk({ ...bulk, break_start: e.target.value })}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500">Break End</span>
+                      <input
+                        type="time"
+                        value={bulk.break_end}
+                        onChange={(e) => setBulk({ ...bulk, break_end: e.target.value })}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 bg-white"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
 
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={bulk.skip_existing}
                   onChange={(e) => setBulk({ ...bulk, skip_existing: e.target.checked })}
+                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
                 />
-                Skip slots that already exist (recommended)
+                Skip slots that already exist in the database (avoid duplicates)
               </label>
 
-              {bulk.doctor_id && schedules.length > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded p-3 text-xs">
-                  <div className="font-medium text-amber-900 mb-2">
-                    Effective windows (intersection of your input & doctor's schedule)
-                  </div>
-                  <div className="space-y-1">
-                    {bulk.days_of_week.map(dow => {
-                      const w = computeDayWindow(dow);
-                      const label = DOW.find(x => x.value === dow)?.label;
-                      if (!w) {
-                        return (
-                          <div key={dow} className="text-red-600">
-                            <b>{label}:</b> no overlap — 0 slots
-                          </div>
-                        );
-                      }
-                      const breakStr = w.breaks.length
-                        ? w.breaks.map(b => `${toHHMM(b.start)}-${toHHMM(b.end)}`).join(', ')
-                        : 'none';
-                      return (
-                        <div key={dow} className="text-amber-800">
-                          <b>{label}:</b> {toHHMM(w.winStart)} → {toHHMM(w.winEnd)}
-                          <span className="text-amber-600"> (breaks: {breakStr})</span>
-                        </div>
-                      );
-                    })}
-                  </div>
+              {/* Preview card */}
+              <div className="bg-blue-50/70 border border-blue-200/80 rounded-2xl p-3.5 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <Info className="w-4 h-4" />
                 </div>
-              )}
-
-              <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
-                <div className="font-medium text-blue-900">
-                  Preview: ~{preview.perDay} slot{preview.perDay !== 1 ? 's' : ''} per selected day
+                <div className="text-xs">
+                  <p className="font-bold text-blue-900">
+                    Estimated Output: ~{preview.perDay} slots per active day
+                  </p>
+                  <p className="text-blue-700 mt-0.5">
+                    Total of approximately <b className="text-blue-950 font-extrabold">{preview.count} slots</b> will be added.
+                  </p>
+                  {preview.invalidDays.length > 0 && (
+                    <p className="text-rose-600 font-medium mt-1">
+                      ⚠️ No schedule overlap on:{' '}
+                      {preview.invalidDays.map(d => DOW.find(x => x.value === d)?.label).join(', ')}
+                    </p>
+                  )}
                 </div>
-                <div className="text-blue-700">
-                  Total ~<b>{preview.count}</b> slots will be generated.
-                </div>
-                {preview.invalidDays.length > 0 && (
-                  <div className="text-red-600 mt-1">
-                    ⚠️ No valid window on:{' '}
-                    {preview.invalidDays.map(d => DOW.find(x => x.value === d)?.label).join(', ')}
-                  </div>
-                )}
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-6">
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2.5 mt-6 pt-4 border-t border-slate-100">
               <button
+                type="button"
                 onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 border rounded hover:bg-gray-50"
                 disabled={generating}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium text-xs transition-colors"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={generateSlots}
                 disabled={generating || preview.count === 0}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium text-xs shadow-sm transition-all disabled:opacity-50 inline-flex items-center gap-2"
               >
-                {generating ? 'Generating...' : `Generate ${preview.count} Slots`}
+                {generating ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Generate {preview.count} Slots
+                  </>
+                )}
               </button>
             </div>
           </div>

@@ -1,9 +1,29 @@
 // app/dashboard/schedules/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase-client';
+import {
+  Calendar,
+  Clock,
+  Plus,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Pencil,
+  Trash2,
+  Coffee,
+  Stethoscope,
+  X,
+  Check,
+  CalendarDays,
+  Sparkles,
+  Info,
+  Layers,
+  ChevronRight,
+} from 'lucide-react';
 
 interface DoctorSchedule {
   id: string;
@@ -48,6 +68,7 @@ export default function SchedulesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterDoctor, setFilterDoctor] = useState('all');
   const [saving, setSaving] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
 
   // Multi-day bulk schedule state
   const [bulk, setBulk] = useState({
@@ -197,7 +218,6 @@ export default function SchedulesPage() {
 
     try {
       if (editingId) {
-        // Editing a single schedule
         const updateData: any = {
           day_of_week: bulk.days_of_week[0],
           start_time: bulk.start_time,
@@ -215,8 +235,6 @@ export default function SchedulesPage() {
 
         if (error) throw error;
       } else {
-        // Creating for multiple days
-        // First, find which of the selected days already have schedules for this doctor
         const { data: existing } = await supabase
           .from('doctor_schedules')
           .select('id, day_of_week')
@@ -251,7 +269,6 @@ export default function SchedulesPage() {
         }));
 
         if (conflictingDays.length > 0 && bulk.overwrite) {
-          // Delete conflicting then insert fresh
           const ids = conflictingDays.map(d => existingByDay.get(d)!).filter(Boolean);
           const { error: delErr } = await supabase
             .from('doctor_schedules')
@@ -260,8 +277,6 @@ export default function SchedulesPage() {
           if (delErr) throw delErr;
         }
 
-        // Only insert rows for days that are NOT conflicting (if overwrite=false, we already returned)
-        // After deletion, all selected days are safe to insert
         const { error: insErr } = await supabase
           .from('doctor_schedules')
           .insert(rows);
@@ -281,107 +296,222 @@ export default function SchedulesPage() {
   };
 
   const deleteSchedule = async (id: string) => {
-    if (!confirm('Delete this schedule? Existing slots won\'t be affected.')) return;
+    if (!confirm('Are you sure you want to delete this schedule? Existing slots will remain intact.')) return;
 
-    const { error } = await supabase
-      .from('doctor_schedules')
-      .delete()
-      .eq('id', id);
+    setActionId(id);
+    try {
+      const { error } = await supabase
+        .from('doctor_schedules')
+        .delete()
+        .eq('id', id);
 
-    if (!error) fetchData();
+      if (!error) {
+        setSchedules(prev => prev.filter(s => s.id !== id));
+      }
+    } finally {
+      setActionId(null);
+    }
   };
 
   const toggleScheduleAvailability = async (id: string, currentStatus: boolean) => {
-    const { error } = await supabase
-      .from('doctor_schedules')
-      .update({ is_available: !currentStatus })
-      .eq('id', id);
+    setActionId(id);
+    try {
+      const { error } = await supabase
+        .from('doctor_schedules')
+        .update({ is_available: !currentStatus })
+        .eq('id', id);
 
-    if (!error) fetchData();
+      if (!error) {
+        setSchedules(prev => prev.map(s => s.id === id ? { ...s, is_available: !currentStatus } : s));
+      }
+    } finally {
+      setActionId(null);
+    }
   };
 
-  const filteredSchedules = schedules.filter(schedule =>
-    filterDoctor === 'all' || schedule.doctor_id === filterDoctor
-  );
+  const filteredSchedules = useMemo(() => {
+    return schedules.filter(schedule =>
+      filterDoctor === 'all' || schedule.doctor_id === filterDoctor
+    );
+  }, [schedules, filterDoctor]);
 
-  // Group schedules by doctor for a nicer summary
-  const groupedByDoctor = filteredSchedules.reduce((acc, s) => {
-    const key = s.doctor_id || 'unknown';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(s);
-    return acc;
-  }, {} as Record<string, DoctorSchedule[]>);
+  // Metrics
+  const metrics = useMemo(() => {
+    const total = filteredSchedules.length;
+    const active = filteredSchedules.filter(s => s.is_available).length;
+    const inactive = filteredSchedules.filter(s => !s.is_available).length;
+    const uniqueDays = new Set(filteredSchedules.map(s => s.day_of_week)).size;
+    return { total, active, inactive, uniqueDays };
+  }, [filteredSchedules]);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="flex flex-col justify-center items-center h-80 gap-3">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-900 border-t-transparent"></div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Loading schedules...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
-          {currentUser?.role === 'doctor' ? 'My Schedule' : 'Doctor Schedules'}
-        </h1>
+    <div className="space-y-6 pb-12">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            {currentUser?.role === 'doctor' ? 'My Weekly Schedule' : 'Doctor Schedules & Roster'}
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Configure weekly recurring clinical shifts, consult durations, and break intervals.
+          </p>
+        </div>
         <button
           onClick={openAddModal}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium text-sm shadow-sm transition-all active:scale-[0.99]"
         >
-          + Add Schedule
+          <Plus className="w-4 h-4" />
+          <span>Add Schedule</span>
         </button>
       </div>
 
+      {/* KPI Cards Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <CalendarDays className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Shifts</p>
+            <p className="text-2xl font-bold text-slate-900 mt-0.5">{metrics.total}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Active Shifts</p>
+            <p className="text-2xl font-bold text-emerald-600 mt-0.5">{metrics.active}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Off-Duty / Inactive</p>
+            <p className="text-2xl font-bold text-amber-600 mt-0.5">{metrics.inactive}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+            <Layers className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Covered Days</p>
+            <p className="text-2xl font-bold text-purple-600 mt-0.5">{metrics.uniqueDays} / 7</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Selector */}
       {currentUser?.role !== 'doctor' && (
-        <div className="bg-white rounded-lg shadow p-4">
-          <select
-            value={filterDoctor}
-            onChange={(e) => setFilterDoctor(e.target.value)}
-            className="border rounded px-3 py-2"
-          >
-            <option value="all">All Doctors</option>
-            {doctors.map(doc => (
-              <option key={doc.id} value={doc.id}>{doc.full_name}</option>
-            ))}
-          </select>
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex items-center justify-between gap-3">
+          <div className="relative min-w-[240px]">
+            <Stethoscope className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <select
+              value={filterDoctor}
+              onChange={(e) => setFilterDoctor(e.target.value)}
+              aria-label="Filter roster by doctor"
+              className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+            >
+              <option value="all">All Doctors Roster</option>
+              {doctors.map(doc => (
+                <option key={doc.id} value={doc.id}>{doc.full_name}</option>
+              ))}
+            </select>
+          </div>
+
+          {filterDoctor !== 'all' && (
+            <button
+              onClick={() => setFilterDoctor('all')}
+              className="text-xs font-medium text-blue-600 hover:text-blue-800"
+            >
+              Show all doctors
+            </button>
+          )}
         </div>
       )}
 
-      {/* Weekly grid overview */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="text-sm font-medium text-gray-700 mb-3">Weekly Overview</div>
-        <div className="grid grid-cols-7 gap-2">
+      {/* Weekly Visual Roster Grid */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-slate-500" />
+            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Weekly Timetable Overview</h2>
+          </div>
+          <span className="text-[11px] text-slate-400">Recurring 7-Day Cycle</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
           {DAYS.map(day => {
             const daySchedules = filteredSchedules.filter(s => s.day_of_week === day.value);
+            const isWeekend = day.value === 0 || day.value === 6;
+
             return (
-              <div key={day.value} className="border rounded p-2 min-h-[80px] bg-gray-50">
-                <div className="text-xs font-semibold text-gray-700 mb-1">{day.short}</div>
+              <div
+                key={day.value}
+                className={`rounded-2xl border p-3 min-h-[140px] flex flex-col transition-all ${
+                  isWeekend
+                    ? 'border-slate-200 bg-slate-50/50'
+                    : 'border-slate-200 bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-slate-100">
+                  <span className="font-bold text-xs text-slate-900">{day.short}</span>
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${
+                    daySchedules.length > 0 ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-400'
+                  }`}>
+                    {daySchedules.length}
+                  </span>
+                </div>
+
                 {daySchedules.length === 0 ? (
-                  <div className="text-xs text-gray-400 italic">No schedule</div>
+                  <div className="flex-1 flex flex-col items-center justify-center text-slate-300 py-4">
+                    <span className="text-[11px] font-medium italic">Off Day</span>
+                  </div>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-2 flex-1">
                     {daySchedules.map(s => {
                       const docName = currentUser?.role === 'doctor'
                         ? null
                         : doctors.find(d => d.id === s.doctor_id)?.full_name;
+
                       return (
                         <div
                           key={s.id}
-                          className={`text-xs rounded p-1 ${
+                          className={`rounded-xl p-2 border text-[11px] transition-all ${
                             s.is_available
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-200 text-gray-500 line-through'
+                              ? 'bg-emerald-50/60 border-emerald-200/80 text-emerald-900'
+                              : 'bg-slate-100 border-slate-200 text-slate-400 line-through opacity-70'
                           }`}
                         >
-                          {docName && <div className="font-medium truncate">{docName}</div>}
-                          <div>
-                            {s.start_time.slice(0, 5)}-{s.end_time.slice(0, 5)}
+                          {docName && (
+                            <div className="font-bold text-[11px] truncate mb-0.5 text-slate-900">
+                              {docName}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1 font-semibold text-emerald-800 font-mono text-[10px]">
+                            <Clock className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span>{s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}</span>
                           </div>
                           {s.break_start_time && s.break_end_time && (
-                            <div className="text-[10px] opacity-75">
-                              break {s.break_start_time.slice(0, 5)}-{s.break_end_time.slice(0, 5)}
+                            <div className="flex items-center gap-1 text-[9px] text-emerald-700/80 mt-1">
+                              <Coffee className="w-2.5 h-2.5" />
+                              <span>{s.break_start_time.slice(0, 5)} - {s.break_end_time.slice(0, 5)}</span>
                             </div>
                           )}
                         </div>
@@ -395,80 +525,143 @@ export default function SchedulesPage() {
         </div>
       </div>
 
-      {/* Table view */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Detailed Schedules Table */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Shift Rosters List
+          </h3>
+          <span className="text-xs text-slate-400">{filteredSchedules.length} shifts configured</span>
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/75 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
                 {currentUser?.role !== 'doctor' && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doctor</th>
+                  <th className="py-3 px-4">Doctor</th>
                 )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Day</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">End</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Break</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="py-3 px-4">Day of Week</th>
+                <th className="py-3 px-4">Shift Hours</th>
+                <th className="py-3 px-4">Slot Duration</th>
+                <th className="py-3 px-4">Daily Break</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredSchedules.map((schedule) => (
-                <tr key={schedule.id} className="hover:bg-gray-50">
-                  {currentUser?.role !== 'doctor' && (
-                    <td className="px-6 py-4">
-                      {doctors.find(d => d.id === schedule.doctor_id)?.full_name}
-                    </td>
-                  )}
-                  <td className="px-6 py-4">{DAYS.find(d => d.value === schedule.day_of_week)?.label}</td>
-                  <td className="px-6 py-4">{schedule.start_time.slice(0, 5)}</td>
-                  <td className="px-6 py-4">{schedule.end_time.slice(0, 5)}</td>
-                  <td className="px-6 py-4">{schedule.slot_duration_minutes} min</td>
-                  <td className="px-6 py-4">
-                    {schedule.break_start_time && schedule.break_end_time
-                      ? `${schedule.break_start_time.slice(0, 5)} - ${schedule.break_end_time.slice(0, 5)}`
-                      : <span className="text-gray-400">No break</span>}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      schedule.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {schedule.is_available ? 'Available' : 'Unavailable'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => openEditModal(schedule)}
-                        className="text-sm text-blue-600 hover:text-blue-900"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => toggleScheduleAvailability(schedule.id, schedule.is_available)}
-                        className={`text-sm ${
-                          schedule.is_available ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
-                        }`}
-                      >
-                        {schedule.is_available ? 'Disable' : 'Enable'}
-                      </button>
-                      <button
-                        onClick={() => deleteSchedule(schedule.id)}
-                        className="text-sm text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredSchedules.length === 0 && (
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {filteredSchedules.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                    No schedules yet. Click <b>Add Schedule</b> to create one.
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <Calendar className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                    <p className="font-medium text-slate-600">No schedules configured</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Click "+ Add Schedule" to set recurring doctor shifts.
+                    </p>
                   </td>
                 </tr>
+              ) : (
+                filteredSchedules.map((schedule) => {
+                  const doc = doctors.find(d => d.id === schedule.doctor_id);
+                  const dayObj = DAYS.find(d => d.value === schedule.day_of_week);
+
+                  return (
+                    <tr key={schedule.id} className="hover:bg-slate-50/60 transition-colors">
+                      {currentUser?.role !== 'doctor' && (
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-blue-100/80 text-blue-700 flex items-center justify-center font-bold text-[11px]">
+                              {doc?.full_name ? doc.full_name.replace('Dr.', '').trim().charAt(0) : 'D'}
+                            </div>
+                            <span className="font-semibold text-slate-800">
+                              {doc?.full_name || 'Unassigned'}
+                            </span>
+                          </div>
+                        </td>
+                      )}
+
+                      <td className="py-3 px-4">
+                        <span className="font-bold text-slate-800">{dayObj?.label}</span>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold font-mono text-[11px]">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{schedule.start_time.slice(0, 5)} - {schedule.end_time.slice(0, 5)}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-medium text-[11px] bg-blue-50 text-blue-700 border border-blue-200/50">
+                          {schedule.slot_duration_minutes} min
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        {schedule.break_start_time && schedule.break_end_time ? (
+                          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-amber-50 text-amber-800 border border-amber-200/50 font-mono">
+                            <Coffee className="w-3 h-3 text-amber-600" />
+                            <span>{schedule.break_start_time.slice(0, 5)} - {schedule.break_end_time.slice(0, 5)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">No break</span>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-4">
+                        {schedule.is_available ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                            Inactive
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => openEditModal(schedule)}
+                            title="Edit Schedule"
+                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => toggleScheduleAvailability(schedule.id, schedule.is_available)}
+                            disabled={actionId === schedule.id}
+                            title={schedule.is_available ? 'Deactivate Shift' : 'Activate Shift'}
+                            className={`p-1.5 rounded-lg border transition-colors ${
+                              schedule.is_available
+                                ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            {actionId === schedule.id ? (
+                              <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                            ) : schedule.is_available ? (
+                              <XCircle className="w-3.5 h-3.5" />
+                            ) : (
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => deleteSchedule(schedule.id)}
+                            disabled={actionId === schedule.id}
+                            title="Delete Schedule"
+                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -477,21 +670,42 @@ export default function SchedulesPage() {
 
       {/* Add / Edit Schedule Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <h2 className="text-xl font-bold mb-4">
-              {editingId ? 'Edit Schedule' : 'Add Schedule'}
-            </h2>
+        <div className="fixed inset-0 backdrop-blur-md bg-slate-900/40 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">
+                    {editingId ? 'Edit Doctor Shift Schedule' : 'Add Weekly Shift Schedule'}
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    {editingId ? 'Modify shift parameters for this single day' : 'Configure recurring consultation hours'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowAddModal(false); setEditingId(null); }}
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 pt-4">
               {currentUser?.role !== 'doctor' && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">Doctor</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Select Doctor <span className="text-rose-500">*</span>
+                  </label>
                   <select
                     value={bulk.doctor_id}
                     onChange={(e) => setBulk({ ...bulk, doctor_id: e.target.value })}
                     disabled={!!editingId}
-                    className="w-full border rounded px-3 py-2 disabled:bg-gray-100"
+                    className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
                   >
                     <option value="">Select Doctor</option>
                     {doctors.map(doc => (
@@ -501,17 +715,17 @@ export default function SchedulesPage() {
                 </div>
               )}
 
-              {/* Days of week (multi-select) */}
+              {/* Days of week */}
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Days of Week
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Select Days of Week
                   {!editingId && (
-                    <span className="text-xs text-gray-500 ml-2">
-                      (click to toggle — one schedule will be created per day)
+                    <span className="text-[10px] text-slate-400 font-normal ml-2">
+                      (A recurring schedule will be configured for each selected day)
                     </span>
                   )}
                 </label>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-1.5 flex-wrap">
                   {DAYS.map(d => {
                     const isSelected = bulk.days_of_week.includes(d.value);
                     return (
@@ -520,54 +734,60 @@ export default function SchedulesPage() {
                         type="button"
                         disabled={!!editingId}
                         onClick={() => toggleDay(d.value)}
-                        className={`px-3 py-1 rounded border text-sm ${
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
                           isSelected
-                            ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                         } ${editingId ? 'opacity-60 cursor-not-allowed' : ''}`}
                       >
-                        {d.short}
+                        {d.label}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Time range */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Time Range */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Start Time</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Shift Start Time
+                  </label>
                   <input
                     type="time"
                     value={bulk.start_time}
                     onChange={(e) => setBulk({ ...bulk, start_time: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">End Time</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Shift End Time
+                  </label>
                   <input
                     type="time"
                     value={bulk.end_time}
                     onChange={(e) => setBulk({ ...bulk, end_time: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Duration */}
+              {/* Slot Duration */}
               <div>
-                <label className="block text-sm font-medium mb-1">Slot Duration</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Slot Duration
+                </label>
                 <div className="flex gap-2 flex-wrap">
                   {[15, 20, 30, 45, 60].map(m => (
                     <button
                       key={m}
                       type="button"
                       onClick={() => setBulk({ ...bulk, slot_duration_minutes: m })}
-                      className={`px-3 py-1 rounded border text-sm ${
+                      className={`px-3.5 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
                         bulk.slot_duration_minutes === m
-                          ? 'bg-blue-500 text-white border-blue-500'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                       }`}
                     >
                       {m} min
@@ -576,88 +796,115 @@ export default function SchedulesPage() {
                 </div>
               </div>
 
-              {/* Break */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium mb-2">
+              {/* Break Window */}
+              <div className="bg-slate-50/75 p-3 rounded-2xl border border-slate-200/60">
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={bulk.use_break}
                     onChange={(e) => setBulk({ ...bulk, use_break: e.target.checked })}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
                   />
-                  Add a daily break
+                  Configure Daily Lunch / Break Interval
                 </label>
                 {bulk.use_break && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <input
-                      type="time"
-                      value={bulk.break_start_time}
-                      onChange={(e) => setBulk({ ...bulk, break_start_time: e.target.value })}
-                      className="border rounded px-3 py-2"
-                    />
-                    <input
-                      type="time"
-                      value={bulk.break_end_time}
-                      onChange={(e) => setBulk({ ...bulk, break_end_time: e.target.value })}
-                      className="border rounded px-3 py-2"
-                    />
+                  <div className="grid grid-cols-2 gap-3 mt-2.5">
+                    <div>
+                      <span className="text-[10px] text-slate-500">Break Start</span>
+                      <input
+                        type="time"
+                        value={bulk.break_start_time}
+                        onChange={(e) => setBulk({ ...bulk, break_start_time: e.target.value })}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500">Break End</span>
+                      <input
+                        type="time"
+                        value={bulk.break_end_time}
+                        onChange={(e) => setBulk({ ...bulk, break_end_time: e.target.value })}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 bg-white"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Available flag */}
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={bulk.is_available}
-                  onChange={(e) => setBulk({ ...bulk, is_available: e.target.checked })}
-                />
-                Mark schedule as available
-              </label>
-
-              {/* Overwrite flag (only when creating) */}
-              {!editingId && (
-                <label className="flex items-center gap-2 text-sm">
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={bulk.overwrite}
-                    onChange={(e) => setBulk({ ...bulk, overwrite: e.target.checked })}
+                    checked={bulk.is_available}
+                    onChange={(e) => setBulk({ ...bulk, is_available: e.target.checked })}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
                   />
-                  Overwrite existing schedules for selected days
+                  Mark schedule as active / available immediately
                 </label>
-              )}
 
-              {/* Preview */}
+                {!editingId && (
+                  <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={bulk.overwrite}
+                      onChange={(e) => setBulk({ ...bulk, overwrite: e.target.checked })}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    Overwrite existing schedules if days overlap
+                  </label>
+                )}
+              </div>
+
+              {/* Preview Card */}
               {bulk.days_of_week.length > 0 && toMin(bulk.end_time) > toMin(bulk.start_time) && (
-                <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs space-y-2">
-                  <div className="font-medium text-blue-900">Preview</div>
-                  <div className="text-blue-800">
-                    {editingId ? 'Updating' : 'Creating'} {bulk.days_of_week.length} schedule
-                    {bulk.days_of_week.length !== 1 ? 's' : ''} for{' '}
-                    {bulk.days_of_week.map(d => DAYS.find(x => x.value === d)?.short).join(', ')}
+                <div className="bg-blue-50/70 border border-blue-200/80 rounded-2xl p-3.5 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Info className="w-4 h-4" />
                   </div>
-                  <div className="text-blue-700">
-                    {bulk.start_time} → {bulk.end_time}
-                    {bulk.use_break && ` (break ${bulk.break_start_time}–${bulk.break_end_time})`}
-                    {' · '}slot every {bulk.slot_duration_minutes} min
+                  <div className="text-xs">
+                    <p className="font-bold text-blue-900">
+                      {editingId ? 'Updating' : 'Creating'} {bulk.days_of_week.length} schedule shift
+                      {bulk.days_of_week.length !== 1 ? 's' : ''} for:{' '}
+                      <span className="font-extrabold text-blue-950">
+                        {bulk.days_of_week.map(d => DAYS.find(x => x.value === d)?.short).join(', ')}
+                      </span>
+                    </p>
+                    <p className="text-blue-700 mt-0.5">
+                      Shift Window: <b>{bulk.start_time} → {bulk.end_time}</b>
+                      {bulk.use_break && ` (Break: ${bulk.break_start_time}–${bulk.break_end_time})`}
+                      {' · '}{bulk.slot_duration_minutes} min per slot
+                    </p>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="flex justify-end gap-2 mt-6">
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2.5 mt-6 pt-4 border-t border-slate-100">
               <button
+                type="button"
                 onClick={() => { setShowAddModal(false); setEditingId(null); }}
-                className="px-4 py-2 border rounded hover:bg-gray-50"
                 disabled={saving}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium text-xs transition-colors"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={saveSchedule}
                 disabled={saving || bulk.days_of_week.length === 0}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium text-xs shadow-sm transition-all disabled:opacity-50 inline-flex items-center gap-2"
               >
-                {saving ? 'Saving...' : editingId ? 'Update Schedule' : `Create ${bulk.days_of_week.length} Schedule${bulk.days_of_week.length !== 1 ? 's' : ''}`}
+                {saving ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Saving...
+                  </>
+                ) : editingId ? (
+                  'Update Schedule'
+                ) : (
+                  `Create ${bulk.days_of_week.length} Schedule${bulk.days_of_week.length !== 1 ? 's' : ''}`
+                )}
               </button>
             </div>
           </div>
