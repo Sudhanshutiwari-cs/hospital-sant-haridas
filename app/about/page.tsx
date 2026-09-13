@@ -279,7 +279,7 @@ function AboutUsText() {
           </p>
           <p>
             We provide a wide range of medical services including <strong>Eye OPD, Gynecology,
-            Medicine OPD, Pathology Laboratory, Physiotherapy</strong>, and OPDs across multiple
+            Child OPD (Pediatrician), Medicine OPD, Pathology Laboratory, Physiotherapy</strong>, and OPDs across multiple
             disciplines, supported by state-of-the-art diagnostic equipment.
           </p>
           <p>
@@ -580,7 +580,7 @@ const faqItems = [
     id: "services",
     label: "Our Medical Services",
     content:
-      "We offer a wide range of medical services including Eye OPD, Gynecology, Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines.",
+      "We offer a wide range of medical services including Eye OPD, Gynecology, Child OPD (Pediatrician), Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines.",
   },
   {
     id: "facilities",

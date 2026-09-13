@@ -92,6 +92,19 @@ function GynecologyIcon() {
   );
 }
 
+function ChildOpdIcon() {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
+      <circle cx="24" cy="18" r="8" stroke="#1a3a5c" strokeWidth="1.8" />
+      <circle cx="21" cy="17" r="1.2" fill="#1a3a5c" />
+      <circle cx="27" cy="17" r="1.2" fill="#1a3a5c" />
+      <path d="M22 21c.6.8 1.4 1 2 1s1.4-.2 2-1" stroke="#1a9fa8" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M14 38c1.5-6 5.5-9 10-9s8.5 3 10 9" stroke="#1a3a5c" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M24 10V7M21 9l3-2 3 2" stroke="#1a9fa8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function MedicineIcon() {
   return (
     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10">
@@ -365,6 +378,7 @@ function DoctorIllustration() {
 const medicalServices = [
   { name: "Eye OPD", icon: <EyeOpdIcon /> },
   { name: "Gynecology", icon: <GynecologyIcon /> },
+  { name: "Child OPD (Pediatrician)", icon: <ChildOpdIcon /> },
   { name: "Medicine OPD", icon: <MedicineIcon /> },
   { name: "Pathology Laboratory", icon: <PathologyIcon /> },
   { name: "Physiotherapy", icon: <PhysiotherapyIcon /> },
@@ -694,7 +708,7 @@ const faqItems = [
     id: "services",
     label: "Our Medical Services",
     content:
-      "We offer a wide range of medical services including Eye OPD, Gynecology, Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines.",
+      "We offer a wide range of medical services including Eye OPD, Gynecology, Child OPD (Pediatrician), Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines.",
   },
   {
     id: "facilities",

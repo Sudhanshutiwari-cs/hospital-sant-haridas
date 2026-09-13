@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Eye,
   Heart,
+  Baby,
   Stethoscope,
   FlaskConical,
   Activity,
@@ -216,6 +217,20 @@ const services: Service[] = [
     highlight: "Women's Health",
     detailedInfo:
       "Our Gynecology department provides comprehensive care for women at every stage of life. Services include antenatal and postnatal care, treatment of menstrual disorders, menopause management, family planning counseling, and management of gynecological conditions. Our experienced gynecologists provide compassionate, personalized care in a comfortable environment.",
+  },
+  {
+    id: "child-opd",
+    category: "OPD",
+    title: "Child OPD (Pediatrician)",
+    description:
+      "Specialized pediatric consultations and compassionate medical care for newborns, infants, children, and adolescents by experienced child healthcare specialists.",
+    features: ["Pediatric consultations", "Growth & development checks", "Childhood illness management", "Immunization guidance"],
+    image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80",
+    icon: <Baby className={iconClass} />,
+    availability: "Mon – Sat",
+    highlight: "Child Care",
+    detailedInfo:
+      "Our Child OPD provides dedicated, compassionate healthcare for infants, toddlers, children, and teenagers. Our pediatrician specializes in regular growth and developmental milestone assessments, management of childhood infections, seasonal ailments, nutritional guidance, vaccination support, and general pediatric wellness.",
   },
   {
     id: "medicine-opd",
@@ -445,7 +460,7 @@ const serviceFaqItems = [
     id: "services-list",
     label: "What medical services does Sant Haridas Hospital offer?",
     content:
-      "Sant Haridas Hospital offers a comprehensive range of medical services including Eye OPD, Gynecology, Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines.",
+      "Sant Haridas Hospital offers a comprehensive range of medical services including Eye OPD, Gynecology, Child OPD (Pediatrician), Medicine OPD, Pathology Laboratory, Physiotherapy, and OPDs across multiple disciplines.",
   },
   {
     id: "facilities",
