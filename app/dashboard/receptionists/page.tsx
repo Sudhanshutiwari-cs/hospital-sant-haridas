@@ -280,6 +280,7 @@ export default function ReceptionistsPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: editReceptionist.id,
           full_name: editReceptionist.full_name,
           email: editReceptionist.email.trim().toLowerCase(),
           phone: editReceptionist.phone || null,
@@ -324,14 +325,18 @@ export default function ReceptionistsPage() {
       const res = await fetch(`/api/receptionists/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: !currentStatus }),
+        body: JSON.stringify({ id, is_active: !currentStatus }),
       });
 
-      if (!res.ok) throw new Error('Failed to update status');
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Failed to update status');
+      }
 
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating receptionist status:', error);
+      alert(error.message || 'Failed to update status');
     }
   };
 
