@@ -149,7 +149,7 @@ export default function LoginPage() {
               Sant Haridas Hospital
             </h1>
             <p className="text-[13px] sm:text-sm text-gray-600 mt-1">
-              Staff & Doctor Login Portal
+              Doctor & Receptionist Login Portal
             </p>
           </div>
 

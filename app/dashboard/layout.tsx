@@ -18,6 +18,7 @@ import {
   UserCircle,
   ChevronRight,
   Building2,
+  UserCheck,
 } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -106,7 +107,7 @@ export default function DashboardLayout({
     { name: 'Doctors', href: '/dashboard/doctors', icon: Stethoscope },
     { name: 'Schedules', href: '/dashboard/schedules', icon: Clock },
     { name: 'Slots', href: '/dashboard/slots', icon: Timer },
-    { name: 'Staff', href: '/dashboard/staff', icon: Briefcase },
+    { name: 'Receptionists', href: '/dashboard/receptionists', icon: UserCheck },
     { name: 'Blogs', href: '/dashboard/blogs', icon: HeartPulse },
   ] : currentUser.role === 'doctor' ? [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
