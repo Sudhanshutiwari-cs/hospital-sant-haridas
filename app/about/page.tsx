@@ -252,33 +252,197 @@ function AboutHeroBanner() {
 
 // ── Founder Section ───────────────────────────────────────────────────────────
 
-function FounderSection() {
+interface FounderData {
+  id: string;
+  name: string;
+  affiliation: string;
+  specialization: string;
+  roleBadge: string;
+  image: string;
+  aboutShort: string;
+  aboutFull: string;
+  qualifications: string;
+  slug?: string;
+}
+
+const foundersData: FounderData[] = [
+  {
+    id: "dr-prateek-sehrawat",
+    name: "Dr. Prateek Sehrawat",
+    affiliation: "MBBS, MS (Ophthalmology) | Sant Haridas Hospital",
+    specialization: "Ophthalmologist",
+    roleBadge: "Founder & Consultant",
+    image: "https://res.cloudinary.com/df01whs60/image/upload/v1787725729/copy_of_whatsapp_image_2026-08-26_at_115606_am_p3brxu.jpg",
+    aboutShort: "Consultant ophthalmologist specializing in cataracts, glaucoma, macular degeneration, diabetic retinopathy, and refractive errors. Graduate of University College Of Medical Sciences and Lady Hardinge Medical College, Del...",
+    aboutFull: "Consultant ophthalmologist specializing in cataracts, glaucoma, macular degeneration, diabetic retinopathy, and refractive errors. Graduate of University College Of Medical Sciences and Lady Hardinge Medical College, Delhi. Dr. Prateek brings extensive surgical expertise in modern cataract micro-surgery, glaucoma management, diabetic eye care, and visual rehabilitation, committed to providing compassionate, accessible, and high-precision clinical eye care to every patient.",
+    qualifications: "MBBS, MS (Ophthalmology)",
+    slug: "dr-prateek-sehrawat",
+  },
+  {
+    id: "dr-mayura-baliyan",
+    name: "Dr. Mayura Baliyan",
+    affiliation: "MBBS, MS (Lady Hardinge Medical College, Delhi) | Sant Haridas Hospital",
+    specialization: "Gynecologist",
+    roleBadge: "Founder & Consultant",
+    image: "https://res.cloudinary.com/df01whs60/image/upload/v1787725884/WhatsApp_Image_2026-08-26_at_11.56.31_AM_wh2ge0.jpg",
+    aboutShort: "Highly experienced consultant obstetrics and gynaecology. Specializes in Adolescent Health and vaccination, Pregnancy Care (Antenatal, Delivery - normal and Cesarean, postnatal care), Reproductive Health (Infertility, Fa...",
+    aboutFull: "Highly experienced consultant obstetrics and gynaecology. Specializes in Adolescent Health and vaccination, Pregnancy Care (Antenatal, Delivery - normal and Cesarean, postnatal care), Reproductive Health (Infertility, Family Planning), Gynaecology Problems (PCOS, Menstruation Abnormality, Vaginal Infection, Uterus and Ovaries related problems), Menopause and Beyond, Cancer Screening (Pap Smear), and Laparoscopic Gynae Surgery. Gained MBBS and MS degrees from prestigious Lady Hardinge Medical College, Delhi. Worked as senior resident at Government Medical College, Kota and ESIC Hospital Rohini, Delhi.",
+    qualifications: "MBBS, MS (Lady Hardinge Medical College, Delhi)",
+    slug: "dr-mayura-baliyan",
+  },
+];
+
+function FounderCard({ founder }: { founder: FounderData }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
   return (
-    <section className="w-full py-10 sm:py-12 px-3 sm:px-4 bg-white">
-      <div className="max-w-[1200px] mx-auto">
-        <div className="flex flex-col md:flex-row items-center gap-6 sm:gap-8">
-          <div className="relative w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center border-4 border-[#1a9fa8]/20 flex-shrink-0">
-            <div className="flex flex-col items-center gap-3">
-              <svg className="w-16 h-16 sm:w-24 sm:h-24 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="9" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M3 20c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <circle cx="17" cy="9" r="3" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M12 20c0-2.761 1.567-5.143 3.836-6.228" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M13.5 11.5c0-1.5 1-2.5 2.5-2.5s2.5 1 2.5 2.5c0 2-2.5 3.5-2.5 3.5s-2.5-1.5-2.5-3.5z" fill="currentColor" opacity="0.3" />
+    <div className="bg-white border border-gray-200/90 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row">
+      {/* ── Image Holder ── */}
+      <div className="md:w-64 lg:w-72 bg-gradient-to-b from-[#eaf6f7] to-[#d8eff2] p-5 sm:p-6 flex flex-col items-center justify-center flex-shrink-0 relative border-b md:border-b-0 md:border-r border-gray-100">
+        <div className="relative w-44 h-52 sm:w-48 sm:h-56 rounded-2xl overflow-hidden shadow-md border-4 border-white bg-gray-100 flex items-center justify-center">
+          {!imgError && founder.image ? (
+            <Image
+              src={founder.image}
+              alt={founder.name}
+              fill
+              className="object-cover object-top"
+              unoptimized
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center p-4 text-gray-400">
+              <svg className="w-16 h-16 mb-2 text-gray-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M4 20c0-4 4-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <p className="text-[12px] sm:text-sm text-gray-500 font-medium">Founder Couple Image</p>
-              <p className="text-[10px] sm:text-xs text-gray-400">(Placeholder)</p>
+              <span className="text-xs font-semibold text-gray-500">Image Holder</span>
+              <span className="text-[10px] text-gray-400 mt-0.5">Photo Slot</span>
             </div>
+          )}
+          <span className="absolute bottom-2 left-2 right-2 text-center bg-[#1a3a5c]/85 backdrop-blur-xs text-white text-[10px] font-semibold py-0.5 px-2 rounded-md shadow-xs">
+            Sant Haridas Hospital
+          </span>
+        </div>
+        <div className="mt-3 text-center">
+          <span className="inline-block bg-white text-[#1a9fa8] text-[11px] font-bold px-3 py-1 rounded-full shadow-xs border border-[#1a9fa8]/20">
+            {founder.roleBadge}
+          </span>
+        </div>
+      </div>
+
+      {/* ── Details Column ── */}
+      <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between">
+        <div>
+          {/* Header */}
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+            <h3 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+              {founder.name}
+            </h3>
+            <span className="inline-flex items-center gap-1.5 bg-[#eaf6f7] text-[#1a9fa8] font-bold text-xs px-3 py-1 rounded-full border border-[#1a9fa8]/30">
+              {founder.specialization}
+            </span>
           </div>
 
-          <div className="flex-1 text-center md:text-left">
-            <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-3">Our Founders</h2>
+          <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium mb-4">
+            {founder.affiliation}
+          </p>
+
+          <hr className="border-gray-100 mb-4" />
+
+          {/* About Section */}
+          <div className="mb-4">
+            <h4 className="text-[12px] font-bold uppercase tracking-wider text-[#1a3a5c] mb-1.5 flex items-center gap-1.5">
+              <span>About</span>
+            </h4>
             <p className="text-[13px] sm:text-[14px] text-gray-600 leading-relaxed">
-              [Founder couple names and description will go here. This section is dedicated
-              to the visionary couple who together established Sant Haridas Hospital with
-              a mission to provide world-class healthcare services to the community.]
+              {isExpanded ? founder.aboutFull : founder.aboutShort}
             </p>
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="mt-1.5 text-xs font-bold text-[#1a9fa8] hover:text-[#137d84] transition-colors inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>{isExpanded ? "Read Less" : "Read More"}</span>
+              <svg
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
+
+          {/* Qualifications */}
+          <div className="mb-4 bg-gray-50/80 rounded-xl p-3 border border-gray-100">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1a3a5c] mb-1 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-[#1a9fa8]" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 3L2 7l8 4 8-4-8-4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                <path d="M6 9v5c0 1.657 1.791 3 4 3s4-1.343 4-3V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M18 7v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <span>Qualifications</span>
+            </h4>
+            <p className="text-[13px] font-semibold text-gray-800">
+              {founder.qualifications}
+            </p>
+            <div className="mt-1.5">
+              <span className="inline-block bg-white text-gray-700 text-[11px] font-medium px-2.5 py-0.5 rounded border border-gray-200">
+                {founder.specialization}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="pt-2 flex flex-wrap items-center gap-2.5">
+          <Link
+            href="/book-appointment"
+            className="inline-flex items-center gap-1.5 bg-[#e07030] hover:bg-[#c85f22] text-white text-xs sm:text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors shadow-xs"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="3" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M2 7h14" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M6 2v3M12 2v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <span>Book Appointment</span>
+          </Link>
+          <a
+            href="https://wa.me/919540740947"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 border border-gray-200 text-gray-700 hover:text-[#1a9fa8] hover:border-[#1a9fa8] text-xs sm:text-[13px] font-semibold px-3.5 py-2 rounded-lg transition-colors"
+          >
+            <span>Consult via WhatsApp</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FounderSection() {
+  return (
+    <section className="w-full py-12 sm:py-16 px-3 sm:px-4 bg-[#f8fafc] border-b border-gray-100">
+      <div className="max-w-[1200px] mx-auto">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+          <span className="inline-block bg-[#1a9fa8]/10 text-[#1a9fa8] font-bold text-xs uppercase tracking-widest px-3 py-1 rounded-full mb-2">
+            Leadership & Vision
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] tracking-tight">
+            Our Founders
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
+            Meet the visionary doctors and medical leaders who established Sant Haridas Hospital to bring compassionate, world-class healthcare to our community.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8">
+          {foundersData.map((founder) => (
+            <FounderCard key={founder.id} founder={founder} />
+          ))}
         </div>
       </div>
     </section>
