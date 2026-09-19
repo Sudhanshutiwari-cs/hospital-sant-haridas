@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /patient/dashboard
+Disallow: /login
+Disallow: /test
+
+Sitemap: https://www.santharidashospital.com/sitemap.xml
