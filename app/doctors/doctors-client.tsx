@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-client";
 
-// ── Shared Icons ──────────────────────────────────────────────────────────────
+// ── Shared Iccons ──────────────────────────────────────────────────────────────
 
 function SiteLogo() {
   return (
