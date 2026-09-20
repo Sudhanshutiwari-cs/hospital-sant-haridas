@@ -363,23 +363,32 @@ export default function SlotsPage() {
 
     setGenerating(true);
     try {
-      const { data, error } = await supabase.rpc('bulk_create_slots', {
-        p_doctor_id: doctorId,
-        p_slot_type: bulk.slot_type,
-        p_duration_minutes: bulk.duration_minutes,
-        p_start_date: bulk.start_date,
-        p_end_date: bulk.end_date,
-        p_days_of_week: validDays,
-        p_day_start: bulk.day_start,
-        p_day_end: bulk.day_end,
-        p_break_start: bulk.use_break ? bulk.break_start : null,
-        p_break_end: bulk.use_break ? bulk.break_end : null,
-        p_skip_existing: bulk.skip_existing,
+      const res = await fetch('/api/doctor-slots/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          doctor_id: doctorId,
+          slot_type: bulk.slot_type,
+          duration_minutes: bulk.duration_minutes,
+          start_date: bulk.start_date,
+          end_date: bulk.end_date,
+          days_of_week: validDays,
+          day_start: bulk.day_start,
+          day_end: bulk.day_end,
+          use_break: bulk.use_break,
+          break_start: bulk.use_break ? bulk.break_start : null,
+          break_end: bulk.use_break ? bulk.break_end : null,
+          skip_existing: bulk.skip_existing,
+        }),
       });
 
-      if (error) throw error;
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || 'Failed to generate slots');
+      }
 
-      const result = data?.[0];
       alert(`Successfully generated ${result?.inserted_count ?? 0} slots. (${result?.skipped_count ?? 0} duplicates skipped)`);
 
       setShowAddModal(false);
