@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase-client';
+import { formatDoctorName } from '@/lib/utils';
 import {
   Calendar,
   Clock,
@@ -430,7 +431,7 @@ export default function AppointmentsPage() {
         quals.push('Consultant');
         grouped.get(key)!.doctors.push({
           id: doc.id,
-          name: `Dr. ${doc.full_name}`,
+          name: formatDoctorName(doc.full_name),
           qualifications: quals,
           isCurrent: doc.id === currentDoctorId,
         });
@@ -1091,7 +1092,7 @@ export default function AppointmentsPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="font-semibold text-slate-900 text-sm truncate">
-                              {doctor ? `Dr. ${doctor.full_name}` : 'Assigned Doctor'}
+                              {formatDoctorName(doctor?.full_name)}
                             </p>
                             <p className="text-xs text-slate-500 truncate">
                               {doctor?.specialization || 'OPD Consultant'}
@@ -1299,7 +1300,7 @@ export default function AppointmentsPage() {
                   <option value="">Select Doctor</option>
                   {doctors.map((doc) => (
                     <option key={doc.id} value={doc.id}>
-                      Dr. {doc.full_name} — {doc.specialization || 'Consultant'} (Fee: ₹{doc.consultation_fee || 0})
+                      {formatDoctorName(doc.full_name)} — {doc.specialization || 'Consultant'} (Fee: ₹{doc.consultation_fee || 0})
                     </option>
                   ))}
                 </select>

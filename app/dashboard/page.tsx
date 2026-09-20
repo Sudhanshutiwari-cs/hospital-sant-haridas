@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase-client';
+import { formatDoctorName } from '@/lib/utils';
 import {
   Users,
   Stethoscope,
@@ -228,7 +229,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <h1 className="text-2xl font-bold tracking-tight text-white mt-1">
-                  Welcome back, Dr. {currentUser.fullName}
+                  Welcome back, {formatDoctorName(currentUser.fullName)}
                 </h1>
                 <p className="text-slate-300 text-sm mt-0.5">
                   Sant Haridas Hospital • Department Schedule Overview
@@ -755,7 +756,7 @@ export default function DashboardPage() {
                         </td>
                         <td className="py-3.5 px-5">
                           <span className="text-sm font-medium text-slate-700">
-                            {doctor ? `Dr. ${doctor.full_name}` : 'Assigned Doctor'}
+                            {formatDoctorName(doctor?.full_name)}
                           </span>
                         </td>
                         <td className="py-3.5 px-5 text-slate-500 text-xs whitespace-nowrap">

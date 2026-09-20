@@ -17,6 +17,7 @@ import {
   Phone,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase-client";
+import { formatDoctorName } from "@/lib/utils";
 
 type PatientRow = {
   id: string;
@@ -400,7 +401,7 @@ function AppointmentCard({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[14px] font-bold text-[#1a3a5c] truncate">
-                  {appt.doctor?.full_name || "Doctor"}
+                  {formatDoctorName(appt.doctor?.full_name, "Doctor")}
                 </p>
                 <p className="text-[12px] text-gray-500 truncate">
                   {appt.doctor?.specialization || "General Consultation"}

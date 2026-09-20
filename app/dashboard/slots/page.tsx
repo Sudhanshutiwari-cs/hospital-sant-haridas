@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase-client';
+import { formatDoctorName, cleanDoctorName } from '@/lib/utils';
 import {
   Calendar,
   Clock,
@@ -615,10 +616,10 @@ export default function SlotsPage() {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-lg bg-blue-100/80 text-blue-700 flex items-center justify-center font-bold text-[11px]">
-                              {doc?.full_name ? doc.full_name.replace('Dr.', '').trim().charAt(0) : 'D'}
+                              {cleanDoctorName(doc?.full_name).charAt(0) || 'D'}
                             </div>
                             <span className="font-semibold text-slate-800">
-                              {doc?.full_name || 'Unassigned'}
+                              {formatDoctorName(doc?.full_name, 'Unassigned')}
                             </span>
                           </div>
                         </td>
@@ -745,7 +746,7 @@ export default function SlotsPage() {
                   >
                     <option value="">Select Doctor</option>
                     {doctors.map(doc => (
-                      <option key={doc.id} value={doc.id}>{doc.full_name}</option>
+                      <option key={doc.id} value={doc.id}>{formatDoctorName(doc.full_name)}</option>
                     ))}
                   </select>
                 </div>
