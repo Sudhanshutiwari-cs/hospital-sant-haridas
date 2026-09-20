@@ -105,12 +105,12 @@ function MainNav() {
             <span>Patient Login</span>
           </Link>
 
-          <a
-            href="tel:+919540740947"
+          <Link
+            href="/book-appointment"
             className="hidden sm:inline-block bg-[#e07030] hover:bg-[#c85f22] text-white text-[12px] sm:text-[13px] font-semibold px-3 sm:px-5 py-2 sm:py-2.5 rounded transition-colors whitespace-nowrap"
           >
             Book Appointment
-          </a>
+          </Link>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="lg:hidden p-2 -mr-1"
@@ -149,13 +149,13 @@ function MainNav() {
               </svg>
               Patient Login
             </Link>
-            <a
-              href="tel:+919540740947"
+            <Link
+              href="/book-appointment"
               onClick={() => setMobileOpen(false)}
               className="mt-1 mb-2 bg-[#e07030] hover:bg-[#c85f22] text-white font-semibold text-sm px-5 py-2.5 rounded transition-colors text-center"
             >
               Book an Appointment
-            </a>
+            </Link>
           </div>
         </nav>
       )}
@@ -622,15 +622,18 @@ function Footer() {
           <a href="tel:+919540740947" className="text-[14px] sm:text-[15px] font-bold text-[#1a9fa8] hover:text-[#1a3a5c] transition-colors">
             +91 95407 40947
           </a>
-          <a
-            href="tel:+919540740947"
+          <Link
+            href="/book-appointment"
             className="mt-1 inline-flex items-center gap-1.5 bg-[#1a3a5c] text-white text-[11px] sm:text-[12px] font-semibold px-4 py-2 rounded hover:bg-[#122b47] transition-colors"
           >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.02 2.22 2 2 0 012 .04h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M1 6h14" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="5" cy="9.5" r="1" fill="currentColor" />
+              <circle cx="8" cy="9.5" r="1" fill="currentColor" />
             </svg>
             Book an Appointment
-          </a>
+          </Link>
         </div>
       </div>
     </footer>

@@ -111,7 +111,7 @@ function MainNav() {
           </Link>
 
           <Link
-            href="/contact"
+            href="/book-appointment"
             className="hidden sm:inline-block bg-[#e85d26] text-white text-[12px] sm:text-[13px] font-semibold px-3 sm:px-4 py-2 rounded hover:bg-[#c94e1e] transition-colors whitespace-nowrap"
           >
             Book Appointment
@@ -157,7 +157,7 @@ function MainNav() {
               Patient Login
             </Link>
             <Link
-              href="/contact"
+              href="/book-appointment"
               onClick={() => setMobileOpen(false)}
               className="mt-1 mb-2 bg-[#e85d26] hover:bg-[#c94e1e] text-white font-semibold text-sm px-5 py-2.5 rounded transition-colors text-center"
             >
@@ -381,7 +381,7 @@ function ServiceModal({ service, onClose }: { service: Service; onClose: () => v
 
           <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
             <Link
-              href="/contact"
+              href="/book-appointment"
               className="flex-1 py-3 text-[14px] font-semibold text-white bg-[#1a9fa8] rounded-lg hover:bg-[#17878f] transition-colors text-center"
             >
               Book Appointment
@@ -651,7 +651,7 @@ function Footer() {
             +91 95407 40947
           </a>
           <Link
-            href="/contact"
+            href="/book-appointment"
             className="mt-1 inline-flex items-center gap-1.5 bg-[#1a3a5c] text-white text-[11px] sm:text-[12px] font-semibold px-4 py-2 rounded hover:bg-[#122b47] transition-colors"
           >
             <Calendar className="w-3.5 h-3.5" />

@@ -227,7 +227,7 @@ function MainNav() {
           </Link>
 
           <Link
-            href="/contact"
+            href="/book-appointment"
             className="hidden sm:inline-block bg-[#e85d26] hover:bg-[#d14e1c] text-white font-semibold text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 rounded transition-colors whitespace-nowrap"
           >
             Book Appointment
@@ -271,7 +271,7 @@ function MainNav() {
               Patient Login
             </Link>
             <Link
-              href="/contact"
+              href="/book-appointment"
               onClick={() => setMobileOpen(false)}
               className="mt-1 mb-2 bg-[#e85d26] hover:bg-[#d14e1c] text-white font-semibold text-sm px-5 py-2.5 rounded transition-colors text-center"
             >
@@ -506,7 +506,7 @@ function ServicesSection() {
           )}
 
           <Link
-            href="/contact"
+            href="/book-appointment"
             className="inline-flex items-center gap-1 mt-6 sm:mt-8 text-[#1a3a5c] font-semibold text-[14px] sm:text-[15px] hover:text-[#1a9fa8] transition-colors"
           >
             Book a Consultation
@@ -1084,7 +1084,7 @@ function Footer() {
             +91 95407 40947
           </a>
           <Link
-            href="/contact"
+            href="/book-appointment"
             className="mt-1 inline-flex items-center gap-1.5 bg-[#1a3a5c] text-white text-[11px] sm:text-[12px] font-semibold px-4 py-2 rounded hover:bg-[#122b47] transition-colors"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">

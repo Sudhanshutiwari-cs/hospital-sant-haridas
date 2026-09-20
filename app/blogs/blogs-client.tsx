@@ -101,7 +101,7 @@ function MainNav() {
           </Link>
 
           <Link
-            href="/doctors"
+            href="/book-appointment"
             className="hidden md:inline-flex items-center bg-[#e07234] hover:bg-[#c5602a] text-white text-[12px] sm:text-[13px] font-bold px-3 sm:px-4 py-2 rounded transition-colors whitespace-nowrap"
           >
             Book an Appointment
@@ -144,7 +144,7 @@ function MainNav() {
               Patient Login
             </Link>
             <Link
-              href="/doctors"
+              href="/book-appointment"
               onClick={() => setMobileOpen(false)}
               className="mt-1 mb-2 bg-[#e07234] hover:bg-[#c5602a] text-white font-semibold text-sm px-5 py-2.5 rounded transition-colors text-center"
             >
@@ -502,7 +502,7 @@ function BlogsFooter() {
             +91 95407 40947
           </a>
           <Link
-            href="/doctors"
+            href="/book-appointment"
             className="mt-1 inline-flex items-center gap-1.5 bg-[#1a3a5c] text-white text-[11px] sm:text-[12px] font-semibold px-4 py-2 rounded hover:bg-[#122b47] transition-colors"
           >
             Book an Appointment

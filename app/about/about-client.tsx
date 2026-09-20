@@ -107,7 +107,7 @@ function MainNav() {
           </Link>
 
           <Link
-            href="/contact"
+            href="/book-appointment"
             className="hidden sm:inline-block bg-[#e07030] hover:bg-[#c85f22] text-white text-[12px] sm:text-[13px] font-semibold px-3 sm:px-5 py-2 sm:py-2.5 rounded transition-colors whitespace-nowrap"
           >
             Book Appointment
@@ -152,7 +152,7 @@ function MainNav() {
               Patient Login
             </Link>
             <Link
-              href="/contact"
+              href="/book-appointment"
               onClick={() => setMobileOpen(false)}
               className="mt-1 mb-2 bg-[#e07030] hover:bg-[#c85f22] text-white font-semibold text-sm px-5 py-2.5 rounded transition-colors text-center"
             >
@@ -971,7 +971,7 @@ function AboutFooter() {
             +91 95407 40947
           </a>
           <Link
-            href="/contact"
+            href="/book-appointment"
             className="mt-1 inline-flex items-center gap-1.5 bg-[#1a3a5c] text-white text-[11px] sm:text-[12px] font-semibold px-4 py-2 rounded hover:bg-[#122b47] transition-colors"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
