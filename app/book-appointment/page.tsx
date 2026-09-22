@@ -1,7 +1,7 @@
 // app/book-appointment/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -270,6 +270,19 @@ function parseLocalDate(s: string): Date {
   return new Date(y, m - 1, d);
 }
 
+/** Format HH:MM:SS or HH:MM to 12-hour AM/PM string, e.g. '11:30 AM' or '02:15 PM'. */
+function formatTime12h(timeStr?: string | null): string {
+  if (!timeStr) return '';
+  const [hStr, mStr] = timeStr.split(':');
+  let h = parseInt(hStr, 10);
+  if (isNaN(h)) return timeStr.slice(0, 5);
+  const m = mStr || '00';
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${m} ${ampm}`;
+}
+
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export default function BookAppointmentPage() {
@@ -302,6 +315,30 @@ export default function BookAppointmentPage() {
     patient_gender: 'male',
     patient_message: '',
   });
+
+  const [slotPeriodFilter, setSlotPeriodFilter] = useState<'all' | 'morning' | 'afternoon' | 'evening'>('all');
+
+  const morningSlots = useMemo(() => availableSlots.filter(s => {
+    const h = parseInt(s.start_time.split(':')[0], 10);
+    return h < 12;
+  }), [availableSlots]);
+
+  const afternoonSlots = useMemo(() => availableSlots.filter(s => {
+    const h = parseInt(s.start_time.split(':')[0], 10);
+    return h >= 12 && h < 16;
+  }), [availableSlots]);
+
+  const eveningSlots = useMemo(() => availableSlots.filter(s => {
+    const h = parseInt(s.start_time.split(':')[0], 10);
+    return h >= 16;
+  }), [availableSlots]);
+
+  const displayedSlots = useMemo(() => {
+    if (slotPeriodFilter === 'morning') return morningSlots;
+    if (slotPeriodFilter === 'afternoon') return afternoonSlots;
+    if (slotPeriodFilter === 'evening') return eveningSlots;
+    return availableSlots;
+  }, [slotPeriodFilter, availableSlots, morningSlots, afternoonSlots, eveningSlots]);
 
   // Load pre-selected doctor
   useEffect(() => {
@@ -1093,6 +1130,62 @@ export default function BookAppointmentPage() {
                             )}
                           </div>
 
+                          {/* Period filter buttons */}
+                          {availableSlots.length > 0 && (
+                            <div className="flex items-center gap-1.5 sm:gap-2 mb-4 overflow-x-auto pb-1">
+                              <button
+                                type="button"
+                                onClick={() => setSlotPeriodFilter('all')}
+                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+                                  slotPeriodFilter === 'all'
+                                    ? 'bg-[#1a3a5c] text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                All ({availableSlots.length})
+                              </button>
+                              {morningSlots.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSlotPeriodFilter('morning')}
+                                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+                                    slotPeriodFilter === 'morning'
+                                      ? 'bg-[#1a9fa8] text-white shadow-sm'
+                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  Morning ({morningSlots.length})
+                                </button>
+                              )}
+                              {afternoonSlots.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSlotPeriodFilter('afternoon')}
+                                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+                                    slotPeriodFilter === 'afternoon'
+                                      ? 'bg-[#1a9fa8] text-white shadow-sm'
+                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  Afternoon ({afternoonSlots.length})
+                                </button>
+                              )}
+                              {eveningSlots.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSlotPeriodFilter('evening')}
+                                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+                                    slotPeriodFilter === 'evening'
+                                      ? 'bg-[#1a9fa8] text-white shadow-sm'
+                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  Evening ({eveningSlots.length})
+                                </button>
+                              )}
+                            </div>
+                          )}
+
                           {isLoading ? (
                             <div className="flex items-center justify-center py-10 sm:py-12">
                               <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-[#1a9fa8]"></div>
@@ -1105,11 +1198,22 @@ export default function BookAppointmentPage() {
                               <p className="text-[13px] sm:text-[14px] text-gray-600 font-medium">No slots available for this date</p>
                               <p className="text-[11px] sm:text-sm text-gray-500 mt-1">Please select another date</p>
                             </div>
+                          ) : displayedSlots.length === 0 ? (
+                            <div className="text-center py-6 sm:py-8">
+                              <p className="text-[13px] sm:text-[14px] text-gray-600 font-medium">No {slotPeriodFilter} slots available for this date</p>
+                              <button
+                                type="button"
+                                onClick={() => setSlotPeriodFilter('all')}
+                                className="mt-2 text-xs text-[#1a9fa8] underline font-medium"
+                              >
+                                View all available slots ({availableSlots.length})
+                              </button>
+                            </div>
                           ) : (
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
-                              {availableSlots.map((slot) => {
+                              {displayedSlots.map((slot) => {
                                 const isSelected = selectedSlot?.id === slot.id;
-                                const timeLabel = slot.start_time.slice(0, 5);
+                                const timeLabel = formatTime12h(slot.start_time);
 
                                 return (
                                   <button
@@ -1148,7 +1252,7 @@ export default function BookAppointmentPage() {
                               <p className="text-[11px] sm:text-sm text-gray-600 mt-1">
                                 {parseLocalDate(selectedDate).toLocaleDateString('en-US', {
                                   weekday: 'long', day: 'numeric', month: 'long'
-                                })} at {selectedSlot.start_time.slice(0, 5)}
+                                })} at {formatTime12h(selectedSlot.start_time)}
                               </p>
                             </div>
                             <button
@@ -1200,7 +1304,7 @@ export default function BookAppointmentPage() {
                     {selectedSlot ? (
                       <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                         <p className="text-[12px] sm:text-sm text-gray-600">
-                          <span className="font-semibold">Selected Slot:</span> {selectedSlot.start_time.slice(0, 5)} on {selectedDate}
+                          <span className="font-semibold">Selected Slot:</span> {formatTime12h(selectedSlot.start_time)} on {selectedDate}
                         </p>
                       </div>
                     ) : (

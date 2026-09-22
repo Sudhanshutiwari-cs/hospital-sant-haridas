@@ -144,21 +144,18 @@ export default function SlotsPage() {
 
     const inputStart = toMin(bulk.day_start);
     const inputEnd = toMin(bulk.day_end);
-    const schStart = toMin(sch.start_time);
-    const schEnd = toMin(sch.end_time);
 
-    // Working window = intersection
-    const winStart = Math.max(inputStart, schStart);
-    const winEnd = Math.min(inputEnd, schEnd);
+    const winStart = inputStart;
+    const winEnd = inputEnd;
 
     if (winStart >= winEnd) return null;
 
     // Merge breaks: doctor's own break + user's optional break
     const breaks: Array<{ start: number; end: number }> = [];
-    if (sch.break_start_time && sch.break_end_time) {
+    if (sch?.break_start_time && sch?.break_end_time) {
       breaks.push({ start: toMin(sch.break_start_time), end: toMin(sch.break_end_time) });
     }
-    if (bulk.use_break) {
+    if (bulk.use_break && bulk.break_start && bulk.break_end) {
       breaks.push({ start: toMin(bulk.break_start), end: toMin(bulk.break_end) });
     }
 
@@ -283,9 +280,6 @@ export default function SlotsPage() {
   };
 
   const toggleDay = (dow: number) => {
-    const hasSchedule = schedules.some(s => s.day_of_week === dow);
-    if (!hasSchedule) return;
-
     setBulk(prev => ({
       ...prev,
       days_of_week: prev.days_of_week.includes(dow)
@@ -327,38 +321,9 @@ export default function SlotsPage() {
     const doctorId = currentUser?.role === 'doctor' ? currentUser.doctorId : bulk.doctor_id;
     if (!doctorId) { alert('Please select a doctor'); return; }
 
-    const scheduleDays = new Set(schedules.map(s => s.day_of_week));
-    const validDays = bulk.days_of_week.filter(d => scheduleDays.has(d));
-
+    const validDays = bulk.days_of_week;
     if (validDays.length === 0) {
-      alert('The doctor has no configured schedules for the selected days. Please add a schedule first.');
-      return;
-    }
-
-    // Ensure each selected day has at least 1 slot
-    const zeroDays: number[] = [];
-    for (const d of validDays) {
-      const w = computeDayWindow(d);
-      if (!w) { zeroDays.push(d); continue; }
-      let count = 0;
-      let cur = w.winStart;
-      while (cur + bulk.duration_minutes <= w.winEnd) {
-        const slotEnd = cur + bulk.duration_minutes;
-        const inBreak = w.breaks.some(b => cur < b.end && slotEnd > b.start);
-        if (inBreak) {
-          const overlapping = w.breaks.find(b => cur < b.end && slotEnd > b.start);
-          cur = overlapping ? overlapping.end : slotEnd;
-          continue;
-        }
-        count++;
-        cur = slotEnd;
-      }
-      if (count === 0) zeroDays.push(d);
-    }
-
-    if (zeroDays.length > 0) {
-      const names = zeroDays.map(d => DOW.find(x => x.value === d)?.label).join(', ');
-      alert(`These days do not fit within the doctor's active schedule window: ${names}`);
+      alert('Please select at least one day of the week');
       return;
     }
 

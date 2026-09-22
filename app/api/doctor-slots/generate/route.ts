@@ -59,19 +59,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid duration minutes' }, { status: 400 });
     }
 
-    // 1. Fetch active weekly schedules for doctor
-    const { data: schedules, error: schError } = await supabaseAdmin
+    // 1. Fetch active weekly schedules for doctor (used for breaks and linking schedule_id)
+    const { data: schedules } = await supabaseAdmin
       .from('doctor_schedules')
       .select('*')
       .eq('doctor_id', doctor_id)
       .eq('is_available', true);
-
-    if (schError) throw schError;
-    if (!schedules || schedules.length === 0) {
-      return NextResponse.json({
-        error: 'No active schedules found for this doctor. Please configure weekly schedule first.'
-      }, { status: 400 });
-    }
 
     // 2. Fetch existing slots in the date range if skip_existing is enabled
     const existingSet = new Set<string>();
@@ -91,7 +84,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // 3. Generate slots by intersecting requested hours with doctor's schedule
+    // 3. Generate slots for requested days and hours
     const start = new Date(start_date + 'T00:00:00');
     const end = new Date(end_date + 'T00:00:00');
 
@@ -99,24 +92,21 @@ export async function POST(request: Request) {
     let totalGenerated = 0;
     let skippedCount = 0;
 
+    const winStart = toMin(day_start);
+    const winEnd = toMin(day_end);
+
+    if (winStart >= winEnd) {
+      return NextResponse.json({ error: 'Shift end time must be after start time' }, { status: 400 });
+    }
+
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dow = d.getDay();
       if (!days_of_week.includes(dow)) continue;
 
-      const sch = schedules.find((s) => s.day_of_week === dow);
-      if (!sch) continue;
-
-      const inputStart = toMin(day_start);
-      const inputEnd = toMin(day_end);
-      const schStart = toMin(sch.start_time);
-      const schEnd = toMin(sch.end_time);
-
-      const winStart = Math.max(inputStart, schStart);
-      const winEnd = Math.min(inputEnd, schEnd);
-      if (winStart >= winEnd) continue;
+      const sch = (schedules || []).find((s) => s.day_of_week === dow);
 
       const breaks: Array<{ start: number; end: number }> = [];
-      if (sch.break_start_time && sch.break_end_time) {
+      if (sch?.break_start_time && sch?.break_end_time) {
         breaks.push({
           start: toMin(sch.break_start_time),
           end: toMin(sch.break_end_time),
@@ -152,7 +142,7 @@ export async function POST(request: Request) {
         } else {
           slotsToInsert.push({
             doctor_id,
-            schedule_id: sch.id,
+            schedule_id: sch?.id || null,
             slot_date: dateStr,
             start_time: toHHMMSS(cur),
             end_time: toHHMMSS(slotEnd),
