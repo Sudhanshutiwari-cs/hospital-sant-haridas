@@ -15,6 +15,9 @@ import {
   RefreshCw,
   ChevronDown,
   Phone,
+  Pencil,
+  X,
+  Check,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase-client";
 import { formatDoctorName } from "@/lib/utils";
@@ -115,6 +118,63 @@ export default function PatientDashboardPage() {
   const [patient, setPatient] = useState<PatientRow | null>(null);
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    full_name: '',
+    phone: '',
+    gender: '',
+    date_of_birth: '',
+    blood_group: '',
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const openEditModal = () => {
+    if (!patient) return;
+    setEditError(null);
+    setEditForm({
+      full_name: patient.full_name || '',
+      phone: patient.phone || '',
+      gender: patient.gender || '',
+      date_of_birth: patient.date_of_birth || '',
+      blood_group: patient.blood_group || '',
+    });
+    setShowEditModal(true);
+  };
+
+  const saveProfile = async () => {
+    if (!patient) return;
+    if (!editForm.full_name.trim()) {
+      setEditError('Full legal name is required');
+      return;
+    }
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      const res = await fetch(`/api/patients/${patient.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: editForm.full_name.trim(),
+          phone: editForm.phone.trim() || null,
+          gender: editForm.gender || null,
+          date_of_birth: editForm.date_of_birth || null,
+          blood_group: editForm.blood_group || null,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || 'Failed to update profile');
+      }
+      const updated = await res.json();
+      setPatient((prev) => (prev ? { ...prev, ...updated } : null));
+      setShowEditModal(false);
+    } catch (err: any) {
+      setEditError(err.message || 'Failed to update profile');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -259,6 +319,13 @@ export default function PatientDashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={openEditModal}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-teal-200 bg-teal-50 hover:bg-teal-100 text-[13px] font-semibold text-teal-700 transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5 text-teal-600" />
+              <span>Edit Profile</span>
+            </button>
+            <button
               onClick={() => {
                 setRefreshing(true);
                 load(true);
@@ -361,6 +428,146 @@ export default function PatientDashboardPage() {
           )}
         </section>
       </main>
+
+      {/* Edit Profile Modal */}
+      {showEditModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => !savingEdit && setShowEditModal(false)}
+        >
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
+
+          <div
+            className="relative bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-gray-100"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-[#1a9fa8]">
+                  <Pencil className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-[#1a3a5c]">Edit Personal Profile</h2>
+                  <p className="text-xs text-gray-500">Update your patient information</p>
+                </div>
+              </div>
+              <button
+                disabled={savingEdit}
+                onClick={() => setShowEditModal(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-xs font-medium">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <div className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Full Legal Name *</label>
+                <input
+                  type="text"
+                  value={editForm.full_name}
+                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                  className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a9fa8]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a9fa8]"
+                  placeholder="10-digit mobile number"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={editForm.date_of_birth}
+                    onChange={(e) => setEditForm({ ...editForm, date_of_birth: e.target.value })}
+                    className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a9fa8]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Gender</label>
+                  <select
+                    value={editForm.gender}
+                    onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
+                    className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a9fa8]"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Blood Group</label>
+                <select
+                  value={editForm.blood_group}
+                  onChange={(e) => setEditForm({ ...editForm, blood_group: e.target.value })}
+                  className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a9fa8]"
+                >
+                  <option value="">Select Blood Group</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  disabled={savingEdit}
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 text-xs font-semibold hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={savingEdit}
+                  onClick={saveProfile}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1a9fa8] hover:bg-[#158089] text-white text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+                >
+                  {savingEdit ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Save Changes</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
