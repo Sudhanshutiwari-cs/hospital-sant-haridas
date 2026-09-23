@@ -91,6 +91,11 @@ export default function SchedulesPage() {
 
   const fetchData = async () => {
     try {
+      // Auto-purge past slots in background on schedules page visit
+      fetch('/api/doctor-slots/cleanup', { method: 'POST' }).catch((e) =>
+        console.error('Auto cleanup error:', e)
+      );
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.push('/login');

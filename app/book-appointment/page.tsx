@@ -488,6 +488,9 @@ export default function BookAppointmentPage() {
     setError('');
 
     try {
+      // Trigger background cleanup of past slots
+      fetch('/api/doctor-slots/cleanup', { method: 'POST' }).catch(() => {});
+
       const { data: slots, error: slotsError } = await supabase
         .from('doctor_slots')
         .select('*')
@@ -499,7 +502,19 @@ export default function BookAppointmentPage() {
 
       if (slotsError) throw slotsError;
 
-      setAvailableSlots(slots || []);
+      let validSlots = slots || [];
+
+      // Filter out slots that have already passed earlier today (IST)
+      const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      if (selectedDate === todayIST) {
+        const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        const currentHHMM = `${String(nowIST.getHours()).padStart(2, '0')}:${String(nowIST.getMinutes()).padStart(2, '0')}`;
+        validSlots = validSlots.filter(s => s.start_time > currentHHMM);
+      } else if (selectedDate < todayIST) {
+        validSlots = [];
+      }
+
+      setAvailableSlots(validSlots);
       setSelectedSlot(null);
     } catch (err: any) {
       console.error('Error fetching slots:', err);
@@ -522,7 +537,7 @@ export default function BookAppointmentPage() {
     const year = monthDate.getFullYear();
     const month = monthDate.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const todayStr = toLocalDateString(new Date());
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
     const days: { date: string; dayNumber: number; isPast: boolean }[] = [];
     for (let i = 1; i <= daysInMonth; i++) {

@@ -22,6 +22,7 @@ import {
   CalendarDays,
   SlidersHorizontal,
   Info,
+  Trash2,
 } from 'lucide-react';
 
 interface DoctorSlot {
@@ -88,6 +89,9 @@ export default function SlotsPage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'booked' | 'disabled'>('all');
   const [generating, setGenerating] = useState(false);
   const [actionSlotId, setActionSlotId] = useState<string | null>(null);
+  const todayIST = useMemo(() => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }), []);
+  const [cleaningPast, setCleaningPast] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [bulk, setBulk] = useState({
     doctor_id: '',
@@ -103,6 +107,15 @@ export default function SlotsPage() {
     break_end: '11:15',
     skip_existing: true,
   });
+
+  // Default start_date and end_date to today on mount
+  useEffect(() => {
+    setBulk(prev => ({
+      ...prev,
+      start_date: prev.start_date || todayIST,
+      end_date: prev.end_date || todayIST,
+    }));
+  }, [todayIST]);
 
   const [preview, setPreview] = useState({ count: 0, perDay: 0, invalidDays: [] as number[] });
 
@@ -140,8 +153,6 @@ export default function SlotsPage() {
   // Compute effective day window = intersection of user input and doctor's schedule
   const computeDayWindow = (dow: number) => {
     const sch = schedules.find(s => s.day_of_week === dow);
-    if (!sch) return null;
-
     const inputStart = toMin(bulk.day_start);
     const inputEnd = toMin(bulk.day_end);
 
@@ -164,7 +175,7 @@ export default function SlotsPage() {
 
   const computePreview = () => {
     const { start_date, end_date, days_of_week, duration_minutes } = bulk;
-    if (!start_date || !end_date || !duration_minutes) {
+    if (!start_date || !end_date || days_of_week.length === 0 || !duration_minutes) {
       setPreview({ count: 0, perDay: 0, invalidDays: [] });
       return;
     }
@@ -196,11 +207,17 @@ export default function SlotsPage() {
       perDayMap[dow] = count;
     }
 
-    // Total across date range
+    // Total across date range (skipping any dates in the past)
     const start = new Date(start_date + 'T00:00:00');
     const end = new Date(end_date + 'T00:00:00');
     let total = 0;
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const dStr = `${yyyy}-${mm}-${dd}`;
+      if (dStr < todayIST) continue; // Skip past dates
+
       const dow = d.getDay();
       if (!days_of_week.includes(dow)) continue;
       total += perDayMap[dow] || 0;
@@ -214,8 +231,36 @@ export default function SlotsPage() {
     setPreview({ count: total, perDay: minPerDay, invalidDays });
   };
 
+  const handleCleanPastSlots = async (quiet = false) => {
+    try {
+      setCleaningPast(true);
+      const res = await fetch('/api/doctor-slots/cleanup', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        if (!quiet) {
+          setToastMessage(
+            data.deleted > 0
+              ? `Cleaned up ${data.deleted} past date slot(s).`
+              : 'All slots are up to date. No past slots found.'
+          );
+          setTimeout(() => setToastMessage(null), 3500);
+        }
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Error cleaning past slots:', err);
+    } finally {
+      setCleaningPast(false);
+    }
+  };
+
   const fetchData = async () => {
     try {
+      // Auto-purge past slots in background on page visit
+      fetch('/api/doctor-slots/cleanup', { method: 'POST' }).catch((e) =>
+        console.error('Auto cleanup error:', e)
+      );
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.push('/login');
@@ -236,6 +281,7 @@ export default function SlotsPage() {
           supabase.from('doctor_slots')
             .select('*')
             .eq('doctor_id', doctorData.id)
+            .gte('slot_date', todayIST)
             .order('slot_date', { ascending: true })
             .order('start_time', { ascending: true }),
           supabase.from('doctor_schedules')
@@ -260,7 +306,9 @@ export default function SlotsPage() {
         setCurrentUser({ role: staffData.roles?.role_name || 'receptionist' });
 
         const [slotsRes, doctorsRes] = await Promise.all([
-          supabase.from('doctor_slots').select('*')
+          supabase.from('doctor_slots')
+            .select('*')
+            .gte('slot_date', todayIST)
             .order('slot_date', { ascending: true })
             .order('start_time', { ascending: true }),
           supabase.from('doctors').select('id, full_name'),
@@ -427,6 +475,15 @@ export default function SlotsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleCleanPastSlots(false)}
+            disabled={cleaningPast}
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm shadow-xs transition-all active:scale-[0.99] disabled:opacity-50"
+            title="Purge past dates' slots that are prior to today"
+          >
+            <Trash2 className={`w-4 h-4 text-slate-500 ${cleaningPast ? 'animate-spin' : ''}`} />
+            <span>{cleaningPast ? 'Cleaning...' : 'Clean Past Slots'}</span>
+          </button>
           <button
             onClick={() => setShowAddModal(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium text-sm shadow-sm transition-all active:scale-[0.99]"
@@ -798,6 +855,7 @@ export default function SlotsPage() {
                   </label>
                   <input
                     type="date"
+                    min={todayIST}
                     value={bulk.start_date}
                     onChange={(e) => setBulk({ ...bulk, start_date: e.target.value })}
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -809,6 +867,7 @@ export default function SlotsPage() {
                   </label>
                   <input
                     type="date"
+                    min={bulk.start_date || todayIST}
                     value={bulk.end_date}
                     onChange={(e) => setBulk({ ...bulk, end_date: e.target.value })}
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -970,6 +1029,20 @@ export default function SlotsPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-slate-900 text-white rounded-xl shadow-xl text-xs font-medium border border-slate-700/50 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="ml-2 text-slate-400 hover:text-white"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
     </div>

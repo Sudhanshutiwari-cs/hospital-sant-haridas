@@ -1,6 +1,7 @@
 // app/api/doctor-slots/generate/route.ts
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { cleanupPastSlots } from '@/lib/slots-cleanup';
 
 interface GenerateRequest {
   doctor_id: string;
@@ -30,6 +31,9 @@ const toHHMMSS = (min: number) => {
 
 export async function POST(request: Request) {
   try {
+    // Automatically purge past slots before generating new ones
+    await cleanupPastSlots();
+
     const body: GenerateRequest = await request.json();
     const {
       doctor_id,
@@ -58,6 +62,8 @@ export async function POST(request: Request) {
     if (!duration_minutes || duration_minutes <= 0) {
       return NextResponse.json({ error: 'Invalid duration minutes' }, { status: 400 });
     }
+
+    const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
     // 1. Fetch active weekly schedules for doctor (used for breaks and linking schedule_id)
     const { data: schedules } = await supabaseAdmin
@@ -123,6 +129,9 @@ export async function POST(request: Request) {
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
       const dateStr = `${yyyy}-${mm}-${dd}`;
+
+      // Automatically skip past dates - never generate slots in the past
+      if (dateStr < todayIST) continue;
 
       let cur = winStart;
       while (cur + duration_minutes <= winEnd) {
